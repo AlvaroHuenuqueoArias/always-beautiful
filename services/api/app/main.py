@@ -1,0 +1,22 @@
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+# 1️⃣ Crear instancia primero
+app = FastAPI(
+    title="Always Beautiful API",
+    version="0.1.0"
+)
+
+# 2️⃣ Luego agregar middlewares
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# 3️⃣ Luego definir endpoints
+@app.get("/health")
+def health():
+    return {"status": "ok"}
