@@ -35,3 +35,4 @@ class ShippingRateOption(BaseModel):
 class ShippingRateResponse(BaseModel):
     options: list[ShippingRateOption]
     selected: ShippingRateOption | None = None
+    
