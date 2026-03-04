@@ -26,3 +26,4 @@ class ShippingProviderClient:
         selected = min(options, key=lambda x: x.price)
 
         return ShippingRateResponse(options=options, selected=selected)
+    
