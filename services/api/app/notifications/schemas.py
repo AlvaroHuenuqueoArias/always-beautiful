@@ -1,4 +1,4 @@
-from uuid import UUID, uuid4
+from uuid import UUID
 from pydantic import BaseModel, EmailStr
 from typing import Dict
 
@@ -17,4 +17,3 @@ class NotificationResponse(BaseModel):
     recipient: EmailStr
     payload: Dict
     status: str
-    
