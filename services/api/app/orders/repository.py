@@ -17,3 +17,7 @@ class OrderRepository:
 
     def list_all(self) -> List[OrderResponse]:
         return list(self._orders.values())
+
+    def update(self, order: OrderResponse) -> OrderResponse:
+        self._orders[order.id] = order
+        return order
