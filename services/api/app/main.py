@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.shipping.routes import router as shipping_router
 from app.payments.routes import router as payments_router
+from app.orders.routes import router as orders_router   # ← NUEVO MODULO ORDERS
 
 
 app = FastAPI(
@@ -23,6 +24,7 @@ app.add_middleware(
 # Routers de módulos
 app.include_router(shipping_router)
 app.include_router(payments_router)
+app.include_router(orders_router)  
 
 
 @app.get("/health")
