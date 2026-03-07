@@ -1,2 +1,2 @@
 def send_webhook_notification(notification):
-    print("Sending webhook event")
+    print(f"Sending webhook event for notification {notification.id}")
