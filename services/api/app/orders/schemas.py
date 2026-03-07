@@ -2,7 +2,7 @@ from enum import Enum
 from typing import List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 
 
 class OrderStatus(str, Enum):
@@ -12,6 +12,7 @@ class OrderStatus(str, Enum):
     FULFILLING = "FULFILLING"
     SHIPPED = "SHIPPED"
     COMPLETED = "COMPLETED"
+    CANCELLED = "CANCELLED"
 
 
 class OrderItemCreate(BaseModel):
@@ -44,3 +45,17 @@ class OrderResponse(BaseModel):
     total_amount: float
     status: OrderStatus
     shipping_address: Optional[str] = None
+    payment_id: Optional[str] = None
+    shipping_id: Optional[str] = None
+
+
+class OrderStatusUpdate(BaseModel):
+    status: OrderStatus
+
+
+class OrderPaymentLink(BaseModel):
+    payment_id: str = Field(..., min_length=1, max_length=120)
+
+
+class OrderShippingLink(BaseModel):
+    shipping_id: str = Field(..., min_length=1, max_length=120)
