@@ -4,6 +4,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Query, status
 
+# CAMBIO: se elimina el uso del helper externo de availability
 from app.booking.repository import BookingRepository
 from app.booking.schemas import BookingCreate, BookingResponse
 from app.booking.service import BookingService
@@ -40,3 +41,17 @@ def get_daily_availability(
     booking_date: date = Query(...),
 ) -> List[BookingResponse]:
     return booking_service.get_daily_availability(professional_id, booking_date)
+
+
+@router.get("/availability/slots", status_code=status.HTTP_200_OK)
+def get_available_slots_route(
+    professional_id: str = Query(..., min_length=1),
+    booking_date: date = Query(...),
+    service_duration: int = Query(..., gt=0),
+):
+    # CAMBIO: el endpoint ahora usa la lógica oficial del service
+    return booking_service.get_available_slots(
+        professional_id,
+        booking_date,
+        service_duration,
+    )
