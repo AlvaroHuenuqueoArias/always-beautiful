@@ -7,6 +7,7 @@ from app.orders.routes import router as orders_router
 from app.notifications.routes import router as notifications_router
 from app.booking.routes import router as booking_router
 from app.schedule.routes import router as schedule_router
+from app.observability.routes import router as observability_router
 
 
 app = FastAPI(
@@ -31,6 +32,7 @@ app.include_router(orders_router)
 app.include_router(notifications_router)
 app.include_router(booking_router)
 app.include_router(schedule_router)
+app.include_router(observability_router)
 
 
 @app.get("/health")
