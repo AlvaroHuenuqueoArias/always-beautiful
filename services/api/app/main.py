@@ -1,7 +1,14 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.observability.middleware import RequestLoggingMiddleware
+
+from app.observability.error_handlers import (
+    http_exception_handler,
+    generic_exception_handler,
+)
+
+from app.observability.security_headers import SecurityHeadersMiddleware
 
 from app.shipping.routes import router as shipping_router
 from app.payments.routes import router as payments_router
@@ -18,6 +25,7 @@ app = FastAPI(
 )
 
 
+# CORS Middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"],
@@ -27,8 +35,17 @@ app.add_middleware(
 )
 
 
-# Middleware de observabilidad
+# Middleware de observabilidad (logging)
 app.add_middleware(RequestLoggingMiddleware)
+
+
+# Middleware de seguridad HTTP
+app.add_middleware(SecurityHeadersMiddleware)
+
+
+# Registro de manejadores globales de errores
+app.add_exception_handler(HTTPException, http_exception_handler)
+app.add_exception_handler(Exception, generic_exception_handler)
 
 
 # Routers de módulos
