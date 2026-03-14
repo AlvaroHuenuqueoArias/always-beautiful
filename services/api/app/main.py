@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.observability.middleware import RequestLoggingMiddleware
+
 from app.shipping.routes import router as shipping_router
 from app.payments.routes import router as payments_router
 from app.orders.routes import router as orders_router
@@ -23,6 +25,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# Middleware de observabilidad
+app.add_middleware(RequestLoggingMiddleware)
 
 
 # Routers de módulos
