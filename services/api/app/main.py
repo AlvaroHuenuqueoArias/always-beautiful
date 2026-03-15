@@ -18,6 +18,9 @@ from app.booking.routes import router as booking_router
 from app.schedule.routes import router as schedule_router
 from app.observability.routes import router as observability_router
 
+# NUEVO IMPORT DEL MÓDULO CATALOG
+from app.catalog.routes import router as catalog_router
+
 
 app = FastAPI(
     title="Always Beautiful API",
@@ -56,6 +59,9 @@ app.include_router(notifications_router)
 app.include_router(booking_router)
 app.include_router(schedule_router)
 app.include_router(observability_router)
+
+# NUEVO REGISTRO DEL MÓDULO CATALOG
+app.include_router(catalog_router)
 
 
 @app.get("/health")
