@@ -19,6 +19,17 @@ class CatalogItemCreate(BaseModel):
     is_active: bool = True
 
 
+class CatalogItemUpdate(BaseModel):
+    name: Optional[str] = Field(default=None, min_length=2, max_length=120)
+    description: Optional[str] = Field(default=None, max_length=500)
+    price: Optional[float] = Field(default=None, gt=0)
+    stock: Optional[int] = Field(default=None, ge=0)
+
+
+class CatalogItemStatusUpdate(BaseModel):
+    is_active: bool
+
+
 class CatalogItemResponse(BaseModel):
     id: UUID
     name: str

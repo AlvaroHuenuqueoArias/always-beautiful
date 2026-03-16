@@ -17,3 +17,7 @@ class CatalogRepository:
 
     def list_all(self) -> List[CatalogItemResponse]:
         return list(self._items.values())
+
+    def update(self, item: CatalogItemResponse) -> CatalogItemResponse:
+        self._items[item.id] = item
+        return item
