@@ -19,7 +19,7 @@ from app.schedule.routes import router as schedule_router
 from app.observability.routes import router as observability_router
 from app.catalog.routes import router as catalog_router
 from app.cart.routes import router as cart_router
-
+from app.admin.routes import router as admin_router
 
 app = FastAPI(
     title="Always Beautiful API",
@@ -60,6 +60,7 @@ app.include_router(schedule_router)
 app.include_router(observability_router)
 app.include_router(catalog_router)
 app.include_router(cart_router)
+app.include_router(admin_router)
 
 
 @app.get("/health")

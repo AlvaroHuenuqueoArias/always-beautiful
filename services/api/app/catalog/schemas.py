@@ -2,7 +2,7 @@ from enum import Enum
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class CatalogItemType(str, Enum):
@@ -17,6 +17,13 @@ class CatalogItemCreate(BaseModel):
     price: float = Field(..., gt=0)
     stock: Optional[int] = Field(default=None, ge=0)
     is_active: bool = True
+
+    @field_validator("item_type", mode="before")
+    @classmethod
+    def normalize_item_type(cls, value):
+        if isinstance(value, str):
+            return value.upper()
+        return value
 
 
 class CatalogItemUpdate(BaseModel):
