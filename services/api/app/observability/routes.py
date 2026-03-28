@@ -1,21 +1,28 @@
-from fastapi import APIRouter
-from datetime import datetime
+from __future__ import annotations
 
-router = APIRouter(
-    prefix="/system",
-    tags=["system"]
-)
+import os
+from datetime import datetime, timezone
+
+from fastapi import APIRouter
+
+from app.observability.state import observability_state
+
+
+SERVICE_NAME = os.getenv("APP_NAME", "always-beautiful-api")
+SERVICE_VERSION = os.getenv("APP_VERSION", "0.1.0")
+SERVICE_ENVIRONMENT = os.getenv("APP_ENV", "development")
+
+router = APIRouter(prefix="/system", tags=["system"])
 
 
 @router.get("/health")
 def system_health():
     """
     Health check del sistema completo.
-    Usado por monitoreo y orquestadores.
     """
     return {
         "status": "ok",
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.now(timezone.utc).isoformat(),
     }
 
 
@@ -25,20 +32,15 @@ def system_info():
     Información básica del servicio.
     """
     return {
-        "service": "always-beautiful-api",
-        "version": "0.1.0",
-        "environment": "development"
+        "service": SERVICE_NAME,
+        "version": SERVICE_VERSION,
+        "environment": SERVICE_ENVIRONMENT,
     }
 
 
 @router.get("/metrics")
 def system_metrics():
     """
-    Endpoint inicial para métricas del sistema.
-    En el futuro puede integrarse con Prometheus.
+    Métricas básicas en memoria del sistema.
     """
-    return {
-        "uptime": "unknown",
-        "requests_total": "not_implemented",
-        "errors_total": "not_implemented"
-    }
+    return observability_state.as_metrics()
