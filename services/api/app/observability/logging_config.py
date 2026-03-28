@@ -1,17 +1,35 @@
+from __future__ import annotations
+
 import logging
+import sys
+
+LOGGER_NAME = "always-beautiful-api"
+_LOGGER: logging.Logger | None = None
 
 
-def configure_logging():
+def configure_logging() -> logging.Logger:
     """
-    Configura el logger principal del backend.
+    Configura una única instancia del logger principal del backend.
     """
 
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s | %(levelname)s | %(message)s",
+    global _LOGGER
+
+    if _LOGGER is not None:
+        return _LOGGER
+
+    logger = logging.getLogger(LOGGER_NAME)
+    logger.setLevel(logging.INFO)
+    logger.handlers.clear()
+
+    handler = logging.StreamHandler(sys.stdout)
+    formatter = logging.Formatter(
+        fmt="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
     )
+    handler.setFormatter(formatter)
 
-    logger = logging.getLogger("always-beautiful-api")
+    logger.addHandler(handler)
+    logger.propagate = False
 
+    _LOGGER = logger
     return logger

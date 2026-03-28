@@ -1,49 +1,87 @@
-import logging
+from __future__ import annotations
 
-from fastapi import HTTPException, Request
+import logging
+from datetime import datetime, timezone
+
+from fastapi import HTTPException, Request, status
 from fastapi.responses import JSONResponse
+
+from app.observability.state import observability_state
 
 
 logger = logging.getLogger("always-beautiful-api")
 
 
-def http_exception_handler(request: Request, exc: HTTPException):
+def _build_error_payload(
+    request: Request,
+    *,
+    error_type: str,
+    message: str,
+    status_code: int,
+) -> dict:
+    return {
+        "error": {
+            "type": error_type,
+            "message": message,
+            "status_code": status_code,
+            "path": request.url.path,
+            "request_id": getattr(request.state, "request_id", None),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+    }
+
+
+async def http_exception_handler(
+    request: Request, exc: HTTPException
+) -> JSONResponse:
     """
-    Maneja errores HTTP lanzados por el backend.
+    Maneja errores HTTP controlados del backend.
     """
 
+    observability_state.increment_http_errors()
+    request_id = getattr(request.state, "request_id", None)
+
     logger.warning(
-        f"HTTPException | path={request.url.path} | status={exc.status_code} | detail={exc.detail}"
+        "HTTPException | request_id=%s | path=%s | status=%s | detail=%s",
+        request_id,
+        request.url.path,
+        exc.status_code,
+        exc.detail,
     )
 
     return JSONResponse(
         status_code=exc.status_code,
-        content={
-            "error": {
-                "type": "http_error",
-                "message": exc.detail,
-                "path": request.url.path,
-            }
-        },
+        content=_build_error_payload(
+            request,
+            error_type="http_error",
+            message=str(exc.detail),
+            status_code=exc.status_code,
+        ),
     )
 
 
-def generic_exception_handler(request: Request, exc: Exception):
+async def generic_exception_handler(
+    request: Request, exc: Exception
+) -> JSONResponse:
     """
     Maneja errores inesperados del sistema.
     """
 
-    logger.error(
-        f"UnhandledException | path={request.url.path} | error={str(exc)}"
+    observability_state.increment_unhandled_errors()
+    request_id = getattr(request.state, "request_id", None)
+
+    logger.exception(
+        "UnhandledException | request_id=%s | path=%s",
+        request_id,
+        request.url.path,
     )
 
     return JSONResponse(
-        status_code=500,
-        content={
-            "error": {
-                "type": "internal_error",
-                "message": "Internal server error",
-                "path": request.url.path,
-            }
-        },
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content=_build_error_payload(
+            request,
+            error_type="internal_error",
+            message="Internal server error",
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        ),
     )
