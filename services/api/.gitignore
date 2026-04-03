@@ -1,0 +1,4 @@
+
+# Artefactos locales de base de datos
+*.db
+*.sqlite3
