@@ -1,10 +1,15 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.admin.routes import router as admin_router
+from app.auth.routes import router as auth_router
 from app.booking.routes import router as booking_router
 from app.cart.routes import router as cart_router
 from app.catalog.routes import router as catalog_router
+from app.core.config import get_settings
+from app.db.session import init_db
 from app.notifications.routes import router as notifications_router
 from app.observability.error_handlers import (
     generic_exception_handler,
@@ -19,37 +24,41 @@ from app.payments.routes import router as payments_router
 from app.schedule.routes import router as schedule_router
 from app.shipping.routes import router as shipping_router
 
+
+settings = get_settings()
 configure_logging()
 
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    init_db()
+    yield
+
+
 app = FastAPI(
-    title="Always Beautiful API",
-    version="0.1.0",
+    title=settings.app_name,
+    version=settings.app_version,
+    docs_url="/docs" if settings.docs_enabled else None,
+    redoc_url="/redoc" if settings.docs_enabled else None,
+    openapi_url="/openapi.json" if settings.docs_enabled else None,
+    lifespan=lifespan,
 )
 
-
-# CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-    ],
+    allow_origins=settings.allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Seguridad HTTP
 app.add_middleware(SecurityHeadersMiddleware)
-
-# Logging y trazabilidad
 app.add_middleware(RequestLoggingMiddleware)
 
-# Manejadores globales de errores
 app.add_exception_handler(HTTPException, http_exception_handler)
 app.add_exception_handler(Exception, generic_exception_handler)
 
-# Routers de módulos
+app.include_router(auth_router)
 app.include_router(shipping_router)
 app.include_router(payments_router)
 app.include_router(orders_router)
