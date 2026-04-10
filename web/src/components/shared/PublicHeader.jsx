@@ -1,24 +1,31 @@
-import { Link, NavLink } from "react-router-dom";
-
-const NAV_ITEMS = [
-    { to: "/", label: "Inicio" },
-    { to: "/services", label: "Servicios" },
-    { to: "/products", label: "Productos" },
-    { to: "/booking", label: "Reservas" },
-    { to: "/cart", label: "Carrito" }
-];
+import { NavLink } from "react-router-dom";
+import {
+    STOREFRONT_BRAND,
+    STOREFRONT_NAV_ITEMS
+} from "../../design/tokens";
+import StorefrontButton from "./StorefrontButton";
 
 export default function PublicHeader() {
     return (
         <header className="public-header">
             <div className="public-header__container">
-                <Link to="/" className="public-brand">
-                    <span className="public-brand__kicker">Always Beautiful</span>
-                    <strong className="public-brand__title">Storefront</strong>
-                </Link>
+                <div className="public-brand-block">
+                    <NavLink to="/" className="public-brand">
+                        <span className="public-brand__kicker">
+                            {STOREFRONT_BRAND.name}
+                        </span>
+                        <strong className="public-brand__title">
+                            {STOREFRONT_BRAND.division}
+                        </strong>
+                    </NavLink>
+
+                    <p className="public-brand__subtitle">
+                        {STOREFRONT_BRAND.eyebrow}
+                    </p>
+                </div>
 
                 <nav className="public-nav" aria-label="Navegación principal">
-                    {NAV_ITEMS.map((item) => (
+                    {STOREFRONT_NAV_ITEMS.map((item) => (
                         <NavLink
                             key={item.to}
                             to={item.to}
@@ -34,12 +41,21 @@ export default function PublicHeader() {
                 </nav>
 
                 <div className="public-header__actions">
-                    <Link to="/checkout" className="public-cta public-cta--secondary">
+                    <StorefrontButton
+                        to="/checkout"
+                        variant="ghost"
+                        size="sm"
+                    >
                         Checkout
-                    </Link>
-                    <Link to="/admin" className="public-cta public-cta--primary">
+                    </StorefrontButton>
+
+                    <StorefrontButton
+                        to="/admin"
+                        variant="primary"
+                        size="sm"
+                    >
                         Admin
-                    </Link>
+                    </StorefrontButton>
                 </div>
             </div>
         </header>

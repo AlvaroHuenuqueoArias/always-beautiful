@@ -1,22 +1,50 @@
+import SectionHeading from "../../components/shared/SectionHeading";
+import StorefrontCard from "../../components/shared/StorefrontCard";
+import StorefrontButton from "../../components/shared/StorefrontButton";
+import { BOOKING_FLOW } from "../../design/tokens";
+
 export default function BookingPage() {
     return (
-        <section className="public-page">
-            <p className="public-page__eyebrow">Reservas</p>
-            <h1 className="public-page__title">Shell público de reservas</h1>
-            <p className="public-page__description">
-                Esta pantalla será la traducción futura de `appointment.php` al
-                frontend oficial del proyecto. Más adelante integrará servicio,
-                profesional, fecha, horario y validaciones visuales.
-            </p>
+        <section className="page-shell">
+            <SectionHeading
+                eyebrow="Reservas"
+                title="Shell público de reservas con una base más profesional"
+                description="Esta vista sigue siendo de maqueta controlada, pero ya prepara la futura integración de servicios, profesionales, fecha, hora y validaciones."
+            />
 
-            <div className="public-card public-card--wide">
-                <h2>Dependencias futuras</h2>
-                <p>
-                    Esta vista se conectará más adelante con los módulos backend
-                    `booking` y `schedule`, apoyándose inicialmente en datos
-                    ficticios controlados.
-                </p>
+            <div className="storefront-grid storefront-grid--3">
+                {BOOKING_FLOW.map((step) => (
+                    <StorefrontCard
+                        key={step.title}
+                        eyebrow={step.eyebrow}
+                        title={step.title}
+                        description={step.description}
+                        highlight="mango"
+                    />
+                ))}
             </div>
+
+            <div className="storefront-grid storefront-grid--2">
+                <StorefrontCard
+                    eyebrow="Datos futuros"
+                    title="Profesionales y disponibilidad"
+                    description="La siguiente etapa de reservas ya podrá trabajar con profesionales ficticios controlados y luego con datos operativos más cercanos a la realidad."
+                    meta={["No requiere agenda real aún", "Preparado para booking"]}
+                    highlight="pink"
+                />
+
+                <StorefrontCard
+                    eyebrow="Dependencias"
+                    title="Conexión posterior con backend"
+                    description="Esta vista se integrará más adelante con los módulos `booking` y `schedule`, pero hoy su objetivo es puramente estructural y visual."
+                    meta={["Shell visual", "Integración futura"]}
+                    highlight="graphite"
+                />
+            </div>
+
+            <StorefrontButton to="/" variant="primary">
+                Volver al inicio
+            </StorefrontButton>
         </section>
     );
 }
