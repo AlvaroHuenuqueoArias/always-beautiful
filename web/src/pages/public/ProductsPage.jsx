@@ -1,21 +1,44 @@
+import SectionHeading from "../../components/shared/SectionHeading";
+import StorefrontCard from "../../components/shared/StorefrontCard";
+import StorefrontButton from "../../components/shared/StorefrontButton";
+import { PRODUCTS_PREVIEW } from "../../design/tokens";
+
 export default function ProductsPage() {
     return (
-        <section className="public-page">
-            <p className="public-page__eyebrow">Productos</p>
-            <h1 className="public-page__title">Catálogo público base</h1>
-            <p className="public-page__description">
-                Esta pantalla será la traducción inicial de `products.php` a
-                React/Vite. Más adelante incluirá filtros, categorías, cards de
-                producto, estado de stock y transición hacia carrito.
-            </p>
+        <section className="page-shell">
+            <SectionHeading
+                eyebrow="Productos"
+                title="Catálogo público base con mejor lenguaje visual"
+                description="La lógica sigue siendo de placeholder, pero esta vista ya prepara la futura lectura de cards, filtros, stock y recorrido hacia el detalle de producto."
+            />
 
-            <div className="public-card public-card--wide">
-                <h2>Implementación posterior</h2>
-                <p>
-                    El catálogo detallado se construirá en la fase
-                    `feature/storefront-catalog-detail`, utilizando datos
-                    ficticios o reales según disponibilidad.
-                </p>
+            <div className="storefront-grid storefront-grid--3">
+                {PRODUCTS_PREVIEW.map((product) => (
+                    <StorefrontCard
+                        key={product.title}
+                        eyebrow={product.eyebrow}
+                        title={product.title}
+                        description={product.description}
+                        meta={product.meta}
+                        highlight="mango"
+                    />
+                ))}
+            </div>
+
+            <div className="stack-panel">
+                <div className="info-panel">
+                    <h3>Siguiente bloque natural</h3>
+                    <p>
+                        El catálogo detallado llegará en
+                        `feature/storefront-catalog-detail`, donde recién tendrá
+                        sentido trabajar con categorías, stock y contratos reales
+                        del backend.
+                    </p>
+                </div>
+
+                <StorefrontButton to="/cart" variant="secondary">
+                    Continuar al carrito shell
+                </StorefrontButton>
             </div>
         </section>
     );
