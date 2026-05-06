@@ -131,6 +131,10 @@ La estructura base actual del repositorio es:
     ├── index.html
     ├── package-lock.json
     ├── package.json
+    ├── public
+    │   └── images
+    │       └── storefront
+    │           └── home
     ├── src
     │   ├── App.jsx
     │   ├── app
@@ -141,6 +145,8 @@ La estructura base actual del repositorio es:
     │   │   ├── ProfessionalPerformance.jsx
     │   │   ├── TrendSnapshot.jsx
     │   │   └── shared
+    │   ├── data
+    │   │   └── storefront
     │   ├── design
     │   │   └── tokens.js
     │   ├── index.css
@@ -159,7 +165,7 @@ La estructura base actual del repositorio es:
 
 ## Regla 4 — Archivos y carpetas importantes
 
-Los siguientes archivos y carpetas son estratégicos para el proyecto y deben tratarse con especial cuidado:
+Los siguientes archivos y carpetas son estratégicos para el proyecto y deben tratarse con especial cuidado.
 
 ### Documentación principal
 
@@ -223,6 +229,9 @@ Los siguientes archivos y carpetas son estratégicos para el proyecto y deben tr
 - `web/src/pages/public/CartPage.jsx`
 - `web/src/pages/public/CheckoutPage.jsx`
 - `web/src/components/shared/*`
+- `web/src/components/storefront/*`
+- `web/src/data/storefront/*`
+- `web/public/images/storefront/home/*`
 
 ---
 
@@ -513,6 +522,52 @@ La rama puede cerrarse si cumple:
 - Build frontend pasa.
 - Git status queda limpio después de commits.
 - PRs quedan separados por categoría.
+
+### Restricción visual crítica — `hero-effect2.png`
+
+En el módulo Storefront, la imagen correcta del efecto visual es:
+
+```text
+web/public/images/storefront/home/hero-effect2.png
+```
+
+La referencia pública correcta desde React/Vite es:
+
+```text
+/images/storefront/home/hero-effect2.png
+```
+
+Contexto técnico:
+
+- Se detectó previamente una referencia incorrecta a `hero-effect1.png`.
+- El archivo `hero-effect1.png` no existe en `web/public/images/storefront/home/`.
+- El archivo correcto sí existe y se llama `hero-effect2.png`.
+- Luego de corregir el nombre, se detectó una duplicación visual donde `hero-effect2.png` aparecía como una capa suelta en la esquina superior izquierda del Home.
+- Esa duplicación rompía la composición visual del hero superior y no debe reintroducirse.
+
+Regla obligatoria:
+
+Codex no debe volver a insertar una capa directa de background con `hero-effect2.png` sobre el Home superior.
+
+Codex no debe reintroducir reglas CSS de este tipo en capas superiores del Home:
+
+```css
+background: url("/images/storefront/home/hero-effect2.png") center center /
+  contain no-repeat;
+```
+
+Si Codex necesita usar `hero-effect2.png`, debe hacerlo únicamente dentro de las capas visuales ya existentes, sin duplicar el hero, sin crear una imagen flotante adicional, sin posicionarla en la esquina superior izquierda y sin romper el diseño desktop ya aprobado.
+
+Antes de modificar `web/src/index.css`, `HomePage.jsx`, `HeroSection.jsx` o cualquier componente visual del Storefront que use assets del Home, Codex debe revisar si el cambio puede afectar:
+
+- Hero superior.
+- Capas visuales del Home.
+- Responsive móvil/tablet.
+- PublicLayout.
+- Dashboard administrativo.
+- Composición visual aprobada.
+
+Si existe riesgo visual, Codex debe detenerse, explicar el riesgo y pedir autorización antes de modificar.
 
 ---
 
