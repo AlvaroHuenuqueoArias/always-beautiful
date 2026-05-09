@@ -1,16 +1,20 @@
-export const STOREFRONT_BRAND = {
-    name: "Always Beautiful",
-    division: "Storefront",
-    eyebrow: "Boutique Beauty Experience",
-    headline: "Belleza, cuidado y experiencia visual en una sola plataforma",
-    description:
-        "La capa pública del proyecto está siendo diseñada para presentar servicios, productos y reservas con una identidad más elegante, cálida y profesional.",
+export const STOREFRONT_THEME = {
+    brandKicker: "Salón de Belleza",
     palette: {
-        camel: "#b38b6d",
-        pink: "#e6cad4",
-        graphite: "#3f3f46",
-        cream: "#f4e8df",
-        mango: "#f1a55d"
+        background: "#f4ede5",
+        surface: "#fbf5ef",
+        surfaceStrong: "#fffaf5",
+        textPrimary: "#1f1713",
+        textSecondary: "#67584b",
+        magenta: "#bb7a45",
+        magentaSoft: "#ebd2b5",
+        salmon: "#d6a072",
+        terracotta: "#8e5e3b",
+        cream: "#f6ede5",
+        black: "#17120f",
+        graphite: "#3b3029",
+        mango: "#c68752",
+        mangoSoft: "#e7c7a4"
     }
 };
 
@@ -18,67 +22,26 @@ export const STOREFRONT_NAV_ITEMS = [
     { to: "/", label: "Inicio" },
     { to: "/services", label: "Servicios" },
     { to: "/products", label: "Productos" },
-    { to: "/booking", label: "Reservas" },
-    { to: "/cart", label: "Carrito" }
+    { to: "/booking", label: "Reservas" }
 ];
 
-export const STOREFRONT_TRUST_POINTS = [
-    "Estética boutique",
-    "Reserva simple",
-    "Catálogo visual",
-    "Checkout preparado"
-];
+export const STOREFRONT_CART_ITEM = {
+    to: "/cart",
+    label: "🛒",
+    ariaLabel: "Carrito"
+};
 
-export const HOME_FEATURES = [
-    {
-        eyebrow: "Experiencia",
-        title: "Servicios con identidad premium",
-        description:
-            "La futura home destacará una propuesta visual elegante, cercana y comercial para presentar el salón con una narrativa más profesional."
-    },
-    {
-        eyebrow: "Operación",
-        title: "Agenda y reservas conectadas",
-        description:
-            "La experiencia pública quedará preparada para conectarse más adelante con los módulos de booking y schedule sin rehacer la base visual."
-    },
-    {
-        eyebrow: "Comercio",
-        title: "Catálogo y carrito listos para crecer",
-        description:
-            "La estructura del storefront ya contempla evolución hacia productos, detalle de catálogo, carrito y transición ordenada a checkout."
-    },
-    {
-        eyebrow: "Escalabilidad",
-        title: "Diseño reusable y coherente",
-        description:
-            "Esta rama formaliza un sistema visual reutilizable para que las siguientes fases no dependan de CSS improvisado por pantalla."
-    }
-];
-
-export const SERVICES_PREVIEW = [
-    {
-        eyebrow: "Cabello",
-        title: "Color, corte y tratamiento",
-        description:
-            "Bloque visual pensado para servicios de transformación, mantención y cuidado capilar con una lectura más editorial.",
-        meta: ["Preview comercial", "Sin datos reales aún"]
-    },
-    {
-        eyebrow: "Rostro",
-        title: "Cosmetología y cuidado facial",
-        description:
-            "Espacio preparado para integrar servicios estéticos con duración, beneficios y futura categorización visual.",
-        meta: ["Fase siguiente", "Datos ficticios"]
-    },
-    {
-        eyebrow: "Manos y estilo",
-        title: "Detalles de imagen y acabado",
-        description:
-            "Sección diseñada para agrupar servicios complementarios con foco en experiencia, presentación y claridad comercial.",
-        meta: ["UI de referencia", "Sin conexión real aún"]
-    }
-];
+/**
+ * Capa de compatibilidad (legacy exports)
+ * Estas constantes siguen siendo consumidas por:
+ * - ProductsPage.jsx
+ * - BookingPage.jsx
+ * - CartPage.jsx
+ * - CheckoutPage.jsx
+ *
+ * En una rama futura, refactorizaremos esas páginas para consumir data/storefront/*
+ * y podremos eliminar esta sección.
+ */
 
 export const PRODUCTS_PREVIEW = [
     {
