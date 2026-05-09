@@ -460,3 +460,40 @@ No aplicar este stash dentro de `feature/codex-operating-model`.
 Antes de modificar archivos, Codex debe consultar este inventario para entender la estructura y detectar archivos sensibles.
 
 Si una tarea puede afectar archivos críticos, debe solicitar autorización antes de actuar.
+
+---
+
+## Actualización de cierre — Storefront Home/Services
+
+Fecha de actualización: 2026-05-09
+
+La rama `feature/storefront-home-services` fue cerrada mediante Pull Requests separados y merge commits hacia `develop`.
+
+### Pull Requests integrados
+
+- PR #34: assets editoriales del Storefront.
+- PR #35: shell público, sistema visual editorial, header, footer, tokens, CSS y botón flotante.
+- PR #36: data mocks y componentes base del Storefront.
+- PR #37: Home pública y página Services.
+- PR #38: shells públicos iniciales para Products, Booking, Cart y Checkout.
+
+### Estado del módulo Storefront Experience
+
+El módulo Storefront Experience queda actualizado con:
+
+- Home pública implementada.
+- Services pública implementada.
+- PublicLayout operativo.
+- PublicHeader y PublicFooter refinados.
+- FloatingAssistantButton integrado como base visual.
+- Assets editoriales en `web/public/images/storefront/home`.
+- Componentes Storefront en `web/src/components/storefront`.
+- Data mocks en `web/src/data/storefront`.
+- Shells iniciales para Products, Booking, Cart y Checkout.
+
+### Validación técnica
+
+El frontend fue validado con:
+
+```bash
+npm --prefix web run build
