@@ -33,9 +33,11 @@ export default function CheckoutPage() {
                 </p>
             </div>
 
-            <StorefrontButton to="/booking" variant="secondary">
-                Ver módulo de reservas
-            </StorefrontButton>
+            <div className="checkout-page__actions">
+                <StorefrontButton to="/booking" variant="secondary">
+                    Ver módulo de reservas
+                </StorefrontButton>
+            </div>
         </section>
     );
 }
