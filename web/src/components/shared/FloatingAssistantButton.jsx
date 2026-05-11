@@ -1,10 +1,17 @@
-export default function FloatingAssistantButton() {
+export default function FloatingAssistantButton({ isOpen = false, onToggle }) {
+    const assistantLabel = isOpen
+        ? "Cerrar asistente Always Beautiful"
+        : "Abrir asistente Always Beautiful";
+
     return (
         <button
             type="button"
             className="floating-assistant"
-            aria-label="Asistente virtual"
-            title="Asistente virtual"
+            aria-label={assistantLabel}
+            aria-expanded={isOpen}
+            aria-controls="assistant-chat-panel"
+            title={assistantLabel}
+            onClick={onToggle}
         >
             <span className="floating-assistant__bubble" aria-hidden="true">
                 <span className="floating-assistant__icon">

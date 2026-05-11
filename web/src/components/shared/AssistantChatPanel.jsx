@@ -5,6 +5,7 @@ export default function AssistantChatPanel({ isOpen, onClose, children }) {
 
     return (
         <section
+            id="assistant-chat-panel"
             className="assistant-chat-panel"
             role="dialog"
             aria-modal="false"
