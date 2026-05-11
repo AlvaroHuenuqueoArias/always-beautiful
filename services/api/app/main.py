@@ -4,6 +4,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.admin.routes import router as admin_router
+from app.assistant.routes import router as assistant_router
 from app.auth.routes import router as auth_router
 from app.booking.routes import router as booking_router
 from app.cart.routes import router as cart_router
@@ -68,6 +69,7 @@ app.include_router(schedule_router)
 app.include_router(observability_router)
 app.include_router(catalog_router)
 app.include_router(cart_router)
+app.include_router(assistant_router)
 app.include_router(admin_router)
 
 
