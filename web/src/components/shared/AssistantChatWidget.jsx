@@ -41,8 +41,7 @@ function buildAssistantMessage(response) {
     };
 }
 
-export default function AssistantChatWidget() {
-    const [isOpen, setIsOpen] = useState(true);
+export default function AssistantChatWidget({ isOpen = false, onClose }) {
     const [messages, setMessages] = useState([INITIAL_ASSISTANT_MESSAGE]);
     const [draftMessage, setDraftMessage] = useState("");
     const [isLoading, setIsLoading] = useState(false);
@@ -89,10 +88,7 @@ export default function AssistantChatWidget() {
     }
 
     return (
-        <AssistantChatPanel
-            isOpen={isOpen}
-            onClose={() => setIsOpen(false)}
-        >
+        <AssistantChatPanel isOpen={isOpen} onClose={onClose}>
             <AssistantMessageList messages={messages} />
 
             {isLoading && (
