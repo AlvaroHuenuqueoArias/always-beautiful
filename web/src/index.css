@@ -3246,39 +3246,54 @@ tbody td {
     font-weight: 700;
 }
 
-.assistant-message__next-actions {
-    display: grid;
-    gap: 6px;
-    margin: 2px 0 0;
-    padding: 0;
-    list-style: none;
+.assistant-message__quick-replies {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin: 4px 0 0;
 }
 
-.assistant-message__next-actions li {
-    position: relative;
-    padding-left: 16px;
-    color: var(--sf-text-secondary);
-    font-size: 0.84rem;
-    line-height: 1.35;
-}
-
-.assistant-message__next-actions li::before {
-    content: "";
-    position: absolute;
-    top: 0.55em;
-    left: 2px;
-    width: 6px;
-    height: 6px;
+.assistant-message__quick-reply {
+    max-width: 100%;
+    min-height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 7px 11px;
+    border: 1px solid rgba(215, 63, 122, 0.22);
     border-radius: 999px;
-    background: var(--sf-accent);
+    background: rgba(255, 248, 245, 0.84);
+    color: var(--sf-accent-strong);
+    font-size: 0.82rem;
+    font-weight: 800;
+    line-height: 1.25;
+    text-align: left;
+    cursor: pointer;
+    transition:
+        transform 0.18s ease,
+        border-color 0.18s ease,
+        background 0.18s ease,
+        box-shadow 0.18s ease,
+        color 0.18s ease;
 }
 
-.assistant-message--user .assistant-message__next-actions li {
-    color: rgba(255, 255, 255, 0.82);
+.assistant-message__quick-reply:hover {
+    transform: translateY(-1px);
+    border-color: rgba(215, 63, 122, 0.36);
+    background: rgba(255, 255, 255, 0.94);
+    box-shadow: 0 10px 22px rgba(215, 63, 122, 0.12);
+    color: var(--sf-accent);
 }
 
-.assistant-message--user .assistant-message__next-actions li::before {
-    background: rgba(255, 255, 255, 0.84);
+.assistant-message__quick-reply:focus-visible {
+    outline: 3px solid rgba(215, 63, 122, 0.22);
+    outline-offset: 3px;
+}
+
+.assistant-message--user .assistant-message__quick-reply {
+    border-color: rgba(255, 255, 255, 0.36);
+    background: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
 }
 
 .assistant-composer {
@@ -3413,6 +3428,16 @@ tbody td {
 
     .assistant-message {
         max-width: 96%;
+    }
+
+    .assistant-message__quick-replies {
+        display: grid;
+    }
+
+    .assistant-message__quick-reply {
+        width: 100%;
+        justify-content: center;
+        text-align: center;
     }
 }
 
