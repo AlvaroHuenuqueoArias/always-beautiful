@@ -1,5 +1,6 @@
 from app.assistant.prompts import build_prompt_messages
-from app.assistant.state import AssistantIntent, AssistantState
+from app.assistant.policies import get_booking_conversion_flow_step
+from app.assistant.state import AssistantFlowStep, AssistantIntent, AssistantState
 from app.assistant.tools.booking_tools import build_booking_guidance
 from app.assistant.tools.catalog_tools import build_product_guidance
 from app.assistant.tools.cart_tools import build_cart_next_actions
@@ -84,6 +85,7 @@ def booking_node(state: AssistantState) -> AssistantState:
 
     return {
         **state,
+        "flow_step": get_booking_conversion_flow_step(state["message"]),
         "response_message": str(guidance["message"]),
         "requires_deposit": bool(deposit_policy["requires_deposit"]),
         "deposit_percentage": int(deposit_policy["deposit_percentage"]),
@@ -97,6 +99,7 @@ def product_recommendation_node(state: AssistantState) -> AssistantState:
 
     return {
         **state,
+        "flow_step": AssistantFlowStep.PRODUCT_SELECTION.value,
         "response_message": str(guidance["message"]),
         "requires_deposit": False,
         "deposit_percentage": 0,
@@ -107,6 +110,7 @@ def product_recommendation_node(state: AssistantState) -> AssistantState:
 def general_node(state: AssistantState) -> AssistantState:
     return {
         **state,
+        "flow_step": AssistantFlowStep.COMPLETED.value,
         "response_message": (
             "Puedo ayudarte a iniciar una reserva de servicio o tratamiento, "
             "o a orientar una compra de productos desde la web."

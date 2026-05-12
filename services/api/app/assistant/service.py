@@ -1,7 +1,12 @@
 from app.assistant.graph import AssistantGraphRunner
 from app.assistant.memory import AssistantMemory
 from app.assistant.schemas import AssistantChatRequest, AssistantChatResponse
-from app.assistant.state import AssistantIntent, AssistantState
+from app.assistant.state import (
+    DEFAULT_ASSISTANT_FLOW_STEP,
+    AssistantFlowStep,
+    AssistantIntent,
+    AssistantState,
+)
 
 
 class AssistantService:
@@ -27,6 +32,9 @@ class AssistantService:
         response = AssistantChatResponse(
             session_id=payload.session_id,
             intent=AssistantIntent(result["intent"]),
+            flow_step=AssistantFlowStep(
+                result.get("flow_step", DEFAULT_ASSISTANT_FLOW_STEP)
+            ),
             message=result["response_message"],
             requires_deposit=result["requires_deposit"],
             deposit_percentage=result["deposit_percentage"],
@@ -37,4 +45,3 @@ class AssistantService:
         self.memory.append_turn(payload.session_id, "assistant", response.message)
 
         return response
-
