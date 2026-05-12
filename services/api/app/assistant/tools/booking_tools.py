@@ -1,50 +1,43 @@
 from app.assistant.policies import (
     PROFESSIONAL_COSMETOLOGIST,
+    PROFESSIONAL_MARIA_IGNACIA,
+    PROFESSIONAL_NADIA_LUISA,
+    SERVICE_CATEGORY_COSMETOLOGY,
+    SERVICE_CATEGORY_STYLING,
+    SERVICE_CATEGORY_UNKNOWN,
     booking_deposit_required_notice,
     booking_deposit_notice,
     booking_safety_notice,
+    detect_requested_professional,
+    detect_service_category,
     detects_booking_deposit_avoidance,
+    get_professional_service_incompatibility,
 )
 from app.assistant.tools.payment_tools import build_deposit_next_action
 from app.assistant.tools.professional_tools import find_professionals_for_service
 
 
-STYLING_KEYWORDS = {
-    "cabello",
-    "corte",
-    "peinado",
-    "tinte",
-    "color",
-    "alisado",
-    "estilismo",
-    "styling",
-}
-
-COSMETOLOGY_KEYWORDS = {
-    "facial",
-    "limpieza",
-    "piel",
-    "cosmetologia",
-    "cosmetológica",
-    "tratamiento",
-    "skincare",
-}
-
-
 def detect_service_focus(message: str) -> str:
-    normalized_message = message.lower()
+    service_category = detect_service_category(message)
 
-    if any(keyword in normalized_message for keyword in STYLING_KEYWORDS):
-        return "styling"
+    if service_category in {SERVICE_CATEGORY_STYLING, SERVICE_CATEGORY_COSMETOLOGY}:
+        return service_category
 
-    if any(keyword in normalized_message for keyword in COSMETOLOGY_KEYWORDS):
-        return "cosmetology"
-
-    return ""
+    return service_category if service_category != SERVICE_CATEGORY_UNKNOWN else ""
 
 
 def build_booking_guidance(message: str) -> dict[str, object]:
+    incompatibility = get_professional_service_incompatibility(message)
+
+    if incompatibility:
+        return {
+            "message": str(incompatibility["message"]),
+            "professionals": [str(incompatibility["alternative_professional"])],
+            "next_actions": list(incompatibility["next_actions"]),
+        }
+
     service_focus = detect_service_focus(message)
+    requested_professional = detect_requested_professional(message)
     professionals = find_professionals_for_service(service_focus)
     professional_roles = [
         str(professional["role"]) for professional in professionals
@@ -57,6 +50,33 @@ def build_booking_guidance(message: str) -> dict[str, object]:
 
     if detects_booking_deposit_avoidance(message):
         response = f"{booking_deposit_required_notice()} {response}"
+
+    if (
+        requested_professional == PROFESSIONAL_MARIA_IGNACIA
+        and service_focus == SERVICE_CATEGORY_COSMETOLOGY
+    ):
+        response = (
+            f"{response} María Ignacia puede atender servicios de "
+            "cosmetología."
+        )
+
+    if (
+        requested_professional == PROFESSIONAL_NADIA_LUISA
+        and service_focus == SERVICE_CATEGORY_STYLING
+    ):
+        response = (
+            f"{response} Nadia Luisa puede atender servicios de estilismo "
+            "profesional."
+        )
+
+    if (
+        requested_professional == PROFESSIONAL_MARIA_IGNACIA
+        and service_focus == SERVICE_CATEGORY_STYLING
+    ):
+        response = (
+            f"{response} María Ignacia también puede cubrir agenda de "
+            "estilismo profesional cuando corresponda."
+        )
 
     if PROFESSIONAL_COSMETOLOGIST in professional_roles:
         response = (

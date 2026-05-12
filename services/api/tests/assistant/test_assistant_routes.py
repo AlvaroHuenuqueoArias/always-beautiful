@@ -141,6 +141,92 @@ def test_assistant_booking_response_includes_deposit_rule():
     assert_no_confirmed_booking_copy(body)
 
 
+def test_assistant_blocks_cosmetology_with_nadia_luisa():
+    response = client.post(
+        "/assistant/chat",
+        json={
+            "session_id": "cosmetology-nadia-session",
+            "message": "Quiero reservar una limpieza facial con Nadia Luisa.",
+            "channel": "web",
+        },
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    combined_text = f"{body['message']} {' '.join(body['next_actions'])}"
+
+    assert body["intent"] == "booking"
+    assert body["flow_step"] == AssistantFlowStep.PROFESSIONAL_SELECTION.value
+    assert body["requires_deposit"] is True
+    assert body["deposit_percentage"] == BOOKING_DEPOSIT_PERCENTAGE
+    assert "Nadia Luisa no realiza servicios de cosmetología" in body["message"]
+    assert "María Ignacia" in combined_text
+    assert "Continuar con María Ignacia." in body["next_actions"]
+    assert "Cambiar servicio." in body["next_actions"]
+    assert "Elegir otra profesional." in body["next_actions"]
+    assert_no_confirmed_booking_copy(body)
+
+
+def test_assistant_allows_cosmetology_with_maria_ignacia():
+    response = client.post(
+        "/assistant/chat",
+        json={
+            "session_id": "cosmetology-maria-session",
+            "message": "Quiero reservar una limpieza facial con María Ignacia.",
+            "channel": "web",
+        },
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+
+    assert body["intent"] == "booking"
+    assert body["requires_deposit"] is True
+    assert body["deposit_percentage"] == BOOKING_DEPOSIT_PERCENTAGE
+    assert "no realiza servicios de cosmetología" not in body["message"]
+    assert_no_confirmed_booking_copy(body)
+
+
+def test_assistant_allows_styling_with_nadia_luisa():
+    response = client.post(
+        "/assistant/chat",
+        json={
+            "session_id": "styling-nadia-session",
+            "message": "Quiero reservar peinado con Nadia Luisa.",
+            "channel": "web",
+        },
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+
+    assert body["intent"] == "booking"
+    assert body["requires_deposit"] is True
+    assert body["deposit_percentage"] == BOOKING_DEPOSIT_PERCENTAGE
+    assert "no realiza servicios de cosmetología" not in body["message"]
+    assert_no_confirmed_booking_copy(body)
+
+
+def test_assistant_allows_styling_with_maria_ignacia():
+    response = client.post(
+        "/assistant/chat",
+        json={
+            "session_id": "styling-maria-session",
+            "message": "Quiero reservar peinado con María Ignacia.",
+            "channel": "web",
+        },
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+
+    assert body["intent"] == "booking"
+    assert body["requires_deposit"] is True
+    assert body["deposit_percentage"] == BOOKING_DEPOSIT_PERCENTAGE
+    assert "no realiza servicios de cosmetología" not in body["message"]
+    assert_no_confirmed_booking_copy(body)
+
+
 def test_assistant_rejects_booking_without_deposit_confirmation():
     response = client.post(
         "/assistant/chat",
