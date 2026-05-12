@@ -8,10 +8,15 @@ from app.assistant.policies import (
     booking_deposit_required_notice,
     booking_deposit_notice,
     booking_safety_notice,
+    detect_has_day_signal,
+    detect_has_time_signal,
     detect_requested_professional,
     detect_service_category,
     detects_booking_deposit_avoidance,
     get_professional_service_incompatibility,
+)
+from app.assistant.tools.availability_tools import (
+    get_read_only_availability_guidance,
 )
 from app.assistant.tools.payment_tools import build_deposit_next_action
 from app.assistant.tools.professional_tools import find_professionals_for_service
@@ -27,6 +32,23 @@ def detect_service_focus(message: str) -> str:
 
 
 def build_booking_guidance(message: str) -> dict[str, object]:
+    if detects_booking_deposit_avoidance(message):
+        return {
+            "message": (
+                f"{booking_deposit_required_notice()} "
+                "Puedo orientarte para iniciar una reserva de servicio o "
+                f"tratamiento. {booking_deposit_notice()} "
+                f"{booking_safety_notice()}"
+            ),
+            "professionals": [],
+            "next_actions": [
+                "Elegir servicio o tratamiento desde la web.",
+                "Seleccionar profesional disponible: Estilista profesional o Cosmetóloga.",
+                build_deposit_next_action(),
+                "Esperar confirmación operativa del salón.",
+            ],
+        }
+
     incompatibility = get_professional_service_incompatibility(message)
 
     if incompatibility:
@@ -34,6 +56,15 @@ def build_booking_guidance(message: str) -> dict[str, object]:
             "message": str(incompatibility["message"]),
             "professionals": [str(incompatibility["alternative_professional"])],
             "next_actions": list(incompatibility["next_actions"]),
+        }
+
+    if detect_has_day_signal(message) or detect_has_time_signal(message):
+        availability_guidance = get_read_only_availability_guidance(message)
+
+        return {
+            "message": str(availability_guidance["message"]),
+            "professionals": [],
+            "next_actions": list(availability_guidance["next_actions"]),
         }
 
     service_focus = detect_service_focus(message)
@@ -47,9 +78,6 @@ def build_booking_guidance(message: str) -> dict[str, object]:
         "Puedo orientarte para iniciar una reserva de servicio o tratamiento. "
         f"{booking_deposit_notice()} {booking_safety_notice()}"
     )
-
-    if detects_booking_deposit_avoidance(message):
-        response = f"{booking_deposit_required_notice()} {response}"
 
     if (
         requested_professional == PROFESSIONAL_MARIA_IGNACIA

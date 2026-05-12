@@ -179,6 +179,79 @@ def _contains_time_signal(message: str) -> bool:
     )
 
 
+def detect_has_day_signal(message: str) -> bool:
+    return _contains_any_keyword(message.lower(), DAY_KEYWORDS)
+
+
+def detect_has_time_signal(message: str) -> bool:
+    return _contains_time_signal(message.lower())
+
+
+def _normalize_time_label(hour: int, minute: int = 0, period: str = "") -> str:
+    normalized_hour = hour
+    normalized_period = period.lower().replace(".", "")
+
+    if normalized_period == "pm" and normalized_hour < 12:
+        normalized_hour += 12
+
+    if normalized_period == "am" and normalized_hour == 12:
+        normalized_hour = 0
+
+    return f"{normalized_hour:02d}:{minute:02d}"
+
+
+def detect_requested_time_label(message: str) -> str | None:
+    normalized_message = message.lower()
+
+    explicit_time_match = re.search(
+        r"\b([01]?\d|2[0-3])[:.]([0-5]\d)\b",
+        normalized_message,
+    )
+
+    if explicit_time_match:
+        return _normalize_time_label(
+            int(explicit_time_match.group(1)),
+            int(explicit_time_match.group(2)),
+        )
+
+    relative_time_match = re.search(
+        r"\b(?:a las|a la)\s+([01]?\d|2[0-3])\b",
+        normalized_message,
+    )
+
+    if relative_time_match:
+        return _normalize_time_label(int(relative_time_match.group(1)))
+
+    period_time_match = re.search(
+        r"\b([1-9]|1[0-2])\s*(a\.?m\.?|p\.?m\.?)\b",
+        normalized_message,
+    )
+
+    if period_time_match:
+        return _normalize_time_label(
+            int(period_time_match.group(1)),
+            period=period_time_match.group(2),
+        )
+
+    hour_label_match = re.search(
+        r"\b([01]?\d|2[0-3])\s*(?:hrs?|horas?)\b",
+        normalized_message,
+    )
+
+    if hour_label_match:
+        return _normalize_time_label(int(hour_label_match.group(1)))
+
+    standalone_hour_match = re.search(
+        r"\b([01]?\d|2[0-3])\b(?!\s*%)",
+        normalized_message,
+    )
+
+    if standalone_hour_match:
+        return _normalize_time_label(int(standalone_hour_match.group(1)))
+
+    return None
+
+
 def get_booking_conversion_flow_step(message: str) -> str:
     normalized_message = message.lower()
 
@@ -188,6 +261,9 @@ def get_booking_conversion_flow_step(message: str) -> str:
     if detects_booking_deposit_avoidance(normalized_message):
         return AssistantFlowStep.DEPOSIT_CONFIRMATION.value
 
+    if get_professional_service_incompatibility(normalized_message):
+        return AssistantFlowStep.PROFESSIONAL_SELECTION.value
+
     has_booking_intent = _contains_any_keyword(
         normalized_message,
         BOOKING_CONVERSION_INTENT_KEYWORDS,
@@ -196,11 +272,14 @@ def get_booking_conversion_flow_step(message: str) -> str:
         normalized_message,
         BOOKING_SERVICE_KEYWORDS,
     )
-    has_day_signal = _contains_any_keyword(normalized_message, DAY_KEYWORDS)
-    has_time_signal = _contains_time_signal(normalized_message)
+    has_day_signal = detect_has_day_signal(normalized_message)
+    has_time_signal = detect_has_time_signal(normalized_message)
 
     if has_day_signal and not has_time_signal:
         return AssistantFlowStep.TIME_SELECTION.value
+
+    if has_day_signal and has_time_signal:
+        return AssistantFlowStep.AVAILABILITY_CHECK.value
 
     if has_booking_intent and not has_service_signal:
         return AssistantFlowStep.SERVICE_SELECTION.value
