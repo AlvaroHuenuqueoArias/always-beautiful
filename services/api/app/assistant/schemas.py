@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field, field_validator
 
-from app.assistant.state import AssistantChannel, AssistantIntent
+from app.assistant.state import AssistantChannel, AssistantFlowStep, AssistantIntent
 
 
 class AssistantChatRequest(BaseModel):
@@ -20,8 +20,8 @@ class AssistantChatRequest(BaseModel):
 class AssistantChatResponse(BaseModel):
     session_id: str
     intent: AssistantIntent
+    flow_step: AssistantFlowStep = AssistantFlowStep.COMPLETED
     message: str
     requires_deposit: bool
     deposit_percentage: int
     next_actions: list[str]
-

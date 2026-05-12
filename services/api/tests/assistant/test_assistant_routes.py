@@ -4,10 +4,27 @@ from app.assistant.policies import (
     BOOKING_DEPOSIT_PERCENTAGE,
     booking_deposit_required_notice,
 )
+from app.assistant.state import AssistantFlowStep, AssistantIntent
 from app.main import app
 
 
 client = TestClient(app)
+
+FORBIDDEN_BOOKING_CONFIRMATION_COPY = (
+    "reserva confirmada",
+    "hora confirmada",
+    "cita agendada",
+)
+
+
+def assert_no_confirmed_booking_copy(body):
+    combined_text = (
+        f"{body.get('message', '')} "
+        f"{' '.join(body.get('next_actions', []))}"
+    ).lower()
+
+    for forbidden_copy in FORBIDDEN_BOOKING_CONFIRMATION_COPY:
+        assert forbidden_copy not in combined_text
 
 
 def test_assistant_health():
@@ -15,6 +32,10 @@ def test_assistant_health():
 
     assert response.status_code == 200
     assert response.json() == {"status": "ok", "module": "assistant"}
+
+
+def test_assistant_prepares_booking_conversion_intent_without_activating_it():
+    assert AssistantIntent.BOOKING_CONVERSION.value == "booking_conversion"
 
 
 def test_assistant_detects_booking_intent():
@@ -30,8 +51,30 @@ def test_assistant_detects_booking_intent():
     assert response.status_code == 200
     body = response.json()
     assert body["intent"] == "booking"
+    assert "flow_step" in body
     assert body["requires_deposit"] is True
     assert body["deposit_percentage"] == BOOKING_DEPOSIT_PERCENTAGE
+    assert_no_confirmed_booking_copy(body)
+
+
+def test_assistant_booking_day_moves_to_time_selection():
+    response = client.post(
+        "/assistant/chat",
+        json={
+            "session_id": "booking-day-session",
+            "message": "Quiero agendar el miércoles.",
+            "channel": "web",
+        },
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+
+    assert body["intent"] == "booking"
+    assert body["flow_step"] == AssistantFlowStep.TIME_SELECTION.value
+    assert body["requires_deposit"] is True
+    assert body["deposit_percentage"] == BOOKING_DEPOSIT_PERCENTAGE
+    assert_no_confirmed_booking_copy(body)
 
 
 def test_assistant_detects_product_purchase_intent():
@@ -47,9 +90,11 @@ def test_assistant_detects_product_purchase_intent():
     assert response.status_code == 200
     body = response.json()
     assert body["intent"] == "product_recommendation"
+    assert body["flow_step"] == AssistantFlowStep.PRODUCT_SELECTION.value
     assert body["requires_deposit"] is False
     assert body["deposit_percentage"] == 0
     assert "carrito" in " ".join(body["next_actions"]).lower()
+    assert_no_confirmed_booking_copy(body)
 
 
 def test_assistant_prioritizes_product_purchase_over_treatment_context():
@@ -68,8 +113,10 @@ def test_assistant_prioritizes_product_purchase_over_treatment_context():
     assert response.status_code == 200
     body = response.json()
     assert body["intent"] == "product_recommendation"
+    assert body["flow_step"] == AssistantFlowStep.PRODUCT_SELECTION.value
     assert body["requires_deposit"] is False
     assert body["deposit_percentage"] == 0
+    assert_no_confirmed_booking_copy(body)
 
 
 def test_assistant_booking_response_includes_deposit_rule():
@@ -88,8 +135,10 @@ def test_assistant_booking_response_includes_deposit_rule():
 
     assert body["requires_deposit"] is True
     assert body["deposit_percentage"] == 20
+    assert "flow_step" in body
     assert "20%" in combined_text
     assert "desde la web" in combined_text
+    assert_no_confirmed_booking_copy(body)
 
 
 def test_assistant_rejects_booking_without_deposit_confirmation():
@@ -106,9 +155,11 @@ def test_assistant_rejects_booking_without_deposit_confirmation():
     body = response.json()
 
     assert body["intent"] == "booking"
+    assert body["flow_step"] == AssistantFlowStep.DEPOSIT_CONFIRMATION.value
     assert body["requires_deposit"] is True
     assert body["deposit_percentage"] == BOOKING_DEPOSIT_PERCENTAGE
     assert booking_deposit_required_notice() in body["message"]
+    assert_no_confirmed_booking_copy(body)
 
 
 def test_assistant_cosmetologist_can_cover_styling():
@@ -126,8 +177,10 @@ def test_assistant_cosmetologist_can_cover_styling():
     combined_text = f"{body['message']} {' '.join(body['next_actions'])}"
 
     assert body["intent"] == "booking"
+    assert "flow_step" in body
     assert "Cosmetóloga" in combined_text
     assert "estilismo profesional" in combined_text
+    assert_no_confirmed_booking_copy(body)
 
 
 def test_assistant_chat_rejects_invalid_request():
