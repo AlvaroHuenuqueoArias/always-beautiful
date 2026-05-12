@@ -74,6 +74,55 @@ def test_assistant_booking_day_moves_to_time_selection():
     assert body["flow_step"] == AssistantFlowStep.TIME_SELECTION.value
     assert body["requires_deposit"] is True
     assert body["deposit_percentage"] == BOOKING_DEPOSIT_PERCENTAGE
+    assert (
+        "hora prefieres" in body["message"]
+        or "Indicar una hora." in body["next_actions"]
+    )
+    assert_no_confirmed_booking_copy(body)
+
+
+def test_assistant_day_and_time_runs_read_only_availability_check():
+    response = client.post(
+        "/assistant/chat",
+        json={
+            "session_id": "booking-availability-session",
+            "message": "Quiero agendar el miércoles a las 15:00.",
+            "channel": "web",
+        },
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+
+    assert body["intent"] == "booking"
+    assert body["flow_step"] == AssistantFlowStep.AVAILABILITY_CHECK.value
+    assert "disponible de forma tentativa" in body["message"]
+    assert body["requires_deposit"] is True
+    assert body["deposit_percentage"] == BOOKING_DEPOSIT_PERCENTAGE
+    assert "Continuar y pagar abono del 20%." in body["next_actions"]
+    assert_no_confirmed_booking_copy(body)
+
+
+def test_assistant_unavailable_time_suggests_alternatives():
+    response = client.post(
+        "/assistant/chat",
+        json={
+            "session_id": "booking-unavailable-session",
+            "message": "Quiero agendar el miércoles a las 13:00.",
+            "channel": "web",
+        },
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+
+    assert body["intent"] == "booking"
+    assert body["flow_step"] == AssistantFlowStep.AVAILABILITY_CHECK.value
+    assert "no aparece disponible" in body["message"]
+    assert "Probar 16:00." in body["next_actions"]
+    assert "Probar 17:00." in body["next_actions"]
+    assert body["requires_deposit"] is True
+    assert body["deposit_percentage"] == BOOKING_DEPOSIT_PERCENTAGE
     assert_no_confirmed_booking_copy(body)
 
 
@@ -167,6 +216,30 @@ def test_assistant_blocks_cosmetology_with_nadia_luisa():
     assert_no_confirmed_booking_copy(body)
 
 
+def test_assistant_blocks_cosmetology_with_nadia_luisa_before_availability():
+    response = client.post(
+        "/assistant/chat",
+        json={
+            "session_id": "cosmetology-nadia-availability-session",
+            "message": (
+                "Quiero reservar una limpieza facial con Nadia Luisa el "
+                "miércoles a las 15:00."
+            ),
+            "channel": "web",
+        },
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+
+    assert body["intent"] == "booking"
+    assert body["flow_step"] == AssistantFlowStep.PROFESSIONAL_SELECTION.value
+    assert "Nadia Luisa no realiza servicios de cosmetología" in body["message"]
+    assert "María Ignacia" in body["message"]
+    assert "disponible" not in body["message"].lower()
+    assert_no_confirmed_booking_copy(body)
+
+
 def test_assistant_allows_cosmetology_with_maria_ignacia():
     response = client.post(
         "/assistant/chat",
@@ -184,6 +257,31 @@ def test_assistant_allows_cosmetology_with_maria_ignacia():
     assert body["requires_deposit"] is True
     assert body["deposit_percentage"] == BOOKING_DEPOSIT_PERCENTAGE
     assert "no realiza servicios de cosmetología" not in body["message"]
+    assert_no_confirmed_booking_copy(body)
+
+
+def test_assistant_allows_cosmetology_with_maria_ignacia_availability_check():
+    response = client.post(
+        "/assistant/chat",
+        json={
+            "session_id": "cosmetology-maria-availability-session",
+            "message": (
+                "Quiero reservar una limpieza facial con María Ignacia el "
+                "miércoles a las 15:00."
+            ),
+            "channel": "web",
+        },
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+
+    assert body["intent"] == "booking"
+    assert body["flow_step"] == AssistantFlowStep.AVAILABILITY_CHECK.value
+    assert "no realiza servicios de cosmetología" not in body["message"]
+    assert "disponible de forma tentativa" in body["message"]
+    assert body["requires_deposit"] is True
+    assert body["deposit_percentage"] == BOOKING_DEPOSIT_PERCENTAGE
     assert_no_confirmed_booking_copy(body)
 
 
