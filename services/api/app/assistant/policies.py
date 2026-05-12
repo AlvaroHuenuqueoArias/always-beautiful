@@ -7,6 +7,64 @@ BOOKING_DEPOSIT_PERCENTAGE = 20
 
 PROFESSIONAL_STYLIST = "Estilista profesional"
 PROFESSIONAL_COSMETOLOGIST = "Cosmetóloga"
+PROFESSIONAL_NADIA_LUISA = "Nadia Luisa"
+PROFESSIONAL_MARIA_IGNACIA = "María Ignacia"
+
+SERVICE_CATEGORY_STYLING = "styling"
+SERVICE_CATEGORY_COSMETOLOGY = "cosmetology"
+SERVICE_CATEGORY_TREATMENT = "treatment"
+SERVICE_CATEGORY_UNKNOWN = "unknown"
+
+NADIA_LUISA_KEYWORDS = {
+    "nadia",
+    "nadia luisa",
+}
+
+MARIA_IGNACIA_KEYWORDS = {
+    "maria",
+    "maría",
+    "ignacia",
+    "maria ignacia",
+    "maría ignacia",
+}
+
+STYLING_SERVICE_KEYWORDS = {
+    "cabello",
+    "corte",
+    "peinado",
+    "brushing",
+    "tinte",
+    "color",
+    "coloración",
+    "coloracion",
+    "alisado",
+    "balayage",
+    "estilismo",
+    "styling",
+}
+
+COSMETOLOGY_SERVICE_KEYWORDS = {
+    "cosmetologia",
+    "cosmetología",
+    "cosmetológica",
+    "facial",
+    "limpieza",
+    "piel",
+    "skincare",
+    "depilación",
+    "depilacion",
+    "manicure",
+    "pedicure",
+    "pestañas",
+    "pestanas",
+    "maquillaje",
+}
+
+TREATMENT_SERVICE_KEYWORDS = {
+    "tratamiento",
+    "botox",
+    "masaje",
+}
 
 BOOKING_CONVERSION_INTENT_KEYWORDS = {
     "agenda",
@@ -151,3 +209,62 @@ def get_booking_conversion_flow_step(message: str) -> str:
         return AssistantFlowStep.PROFESSIONAL_SELECTION.value
 
     return DEFAULT_BOOKING_FLOW_STEP
+
+
+def detect_requested_professional(message: str) -> str | None:
+    normalized_message = message.lower()
+    requested_professionals = []
+
+    if _contains_any_keyword(normalized_message, NADIA_LUISA_KEYWORDS):
+        requested_professionals.append(PROFESSIONAL_NADIA_LUISA)
+
+    if _contains_any_keyword(normalized_message, MARIA_IGNACIA_KEYWORDS):
+        requested_professionals.append(PROFESSIONAL_MARIA_IGNACIA)
+
+    if len(requested_professionals) == 1:
+        return requested_professionals[0]
+
+    return None
+
+
+def detect_service_category(message: str) -> str:
+    normalized_message = message.lower()
+
+    if _contains_any_keyword(normalized_message, COSMETOLOGY_SERVICE_KEYWORDS):
+        return SERVICE_CATEGORY_COSMETOLOGY
+
+    if _contains_any_keyword(normalized_message, STYLING_SERVICE_KEYWORDS):
+        return SERVICE_CATEGORY_STYLING
+
+    if _contains_any_keyword(normalized_message, TREATMENT_SERVICE_KEYWORDS):
+        return SERVICE_CATEGORY_TREATMENT
+
+    return SERVICE_CATEGORY_UNKNOWN
+
+
+def get_professional_service_incompatibility(
+    message: str,
+) -> dict[str, object] | None:
+    requested_professional = detect_requested_professional(message)
+    service_category = detect_service_category(message)
+
+    if (
+        requested_professional == PROFESSIONAL_NADIA_LUISA
+        and service_category == SERVICE_CATEGORY_COSMETOLOGY
+    ):
+        return {
+            "professional": PROFESSIONAL_NADIA_LUISA,
+            "service_category": SERVICE_CATEGORY_COSMETOLOGY,
+            "alternative_professional": PROFESSIONAL_MARIA_IGNACIA,
+            "message": (
+                "Nadia Luisa no realiza servicios de cosmetología. Para ese "
+                "servicio puede atenderte María Ignacia."
+            ),
+            "next_actions": [
+                "Continuar con María Ignacia.",
+                "Cambiar servicio.",
+                "Elegir otra profesional.",
+            ],
+        }
+
+    return None
