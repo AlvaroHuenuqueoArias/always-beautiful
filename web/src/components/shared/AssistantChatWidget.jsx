@@ -89,7 +89,10 @@ export default function AssistantChatWidget({ isOpen = false, onClose }) {
 
     return (
         <AssistantChatPanel isOpen={isOpen} onClose={onClose}>
-            <AssistantMessageList messages={messages} />
+            <AssistantMessageList
+                messages={messages}
+                onQuickReply={handleSubmit}
+            />
 
             {isLoading && (
                 <p className="assistant-chat-widget__status" aria-live="polite">

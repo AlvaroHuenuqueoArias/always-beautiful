@@ -32,7 +32,23 @@ function getRoleLabel(role) {
     return role === "user" ? "Tú" : "Asistente";
 }
 
-export default function AssistantMessageList({ messages = [] }) {
+function getQuickReplyActions(nextActions) {
+    if (!Array.isArray(nextActions)) {
+        return [];
+    }
+
+    return nextActions
+        .map((action) => ({
+            action,
+            label: sanitizeCommercialCopy(action),
+        }))
+        .filter(
+            ({ action, label }) =>
+                typeof action === "string" && action.trim() && label.trim()
+        );
+}
+
+export default function AssistantMessageList({ messages = [], onQuickReply }) {
     return (
         <div
             className="assistant-message-list"
@@ -40,37 +56,48 @@ export default function AssistantMessageList({ messages = [] }) {
             aria-live="polite"
             aria-relevant="additions text"
         >
-            {messages.map((message) => (
-                <article
-                    key={message.id}
-                    className={`assistant-message assistant-message--${message.role}`}
-                >
-                    <p className="assistant-message__role">
-                        {getRoleLabel(message.role)}
-                    </p>
+            {messages.map((message) => {
+                const quickReplyActions = getQuickReplyActions(message.nextActions);
 
-                    <p className="assistant-message__content">
-                        {sanitizeCommercialCopy(message.content)}
-                    </p>
-
-                    {message.requiresDeposit && (
-                        <p className="assistant-message__deposit-warning">
-                            {DEPOSIT_WARNING}
+                return (
+                    <article
+                        key={message.id}
+                        className={`assistant-message assistant-message--${message.role}`}
+                    >
+                        <p className="assistant-message__role">
+                            {getRoleLabel(message.role)}
                         </p>
-                    )}
 
-                    {Array.isArray(message.nextActions) &&
-                        message.nextActions.length > 0 && (
-                            <ul className="assistant-message__next-actions">
-                                {message.nextActions.map((action) => (
-                                    <li key={action}>
-                                        {sanitizeCommercialCopy(action)}
-                                    </li>
-                                ))}
-                            </ul>
+                        <p className="assistant-message__content">
+                            {sanitizeCommercialCopy(message.content)}
+                        </p>
+
+                        {message.requiresDeposit && (
+                            <p className="assistant-message__deposit-warning">
+                                {DEPOSIT_WARNING}
+                            </p>
                         )}
-                </article>
-            ))}
+
+                        {quickReplyActions.length > 0 && (
+                            <div
+                                className="assistant-message__quick-replies"
+                                aria-label="Acciones rápidas"
+                            >
+                                {quickReplyActions.map(({ action, label }, index) => (
+                                    <button
+                                        key={`${message.id}-${index}-${label}`}
+                                        type="button"
+                                        className="assistant-message__quick-reply"
+                                        onClick={() => onQuickReply?.(action)}
+                                    >
+                                        {label}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </article>
+                );
+            })}
         </div>
     );
 }
