@@ -39,6 +39,8 @@ class AssistantService:
             requires_deposit=result["requires_deposit"],
             deposit_percentage=result["deposit_percentage"],
             next_actions=result["next_actions"],
+            redirect_target=result.get("redirect_target"),
+            cart_payload=result.get("cart_payload"),
         )
 
         self.memory.append_turn(payload.session_id, "user", payload.message)

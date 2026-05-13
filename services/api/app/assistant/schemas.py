@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic import BaseModel, Field, field_validator
 
 from app.assistant.state import AssistantChannel, AssistantFlowStep, AssistantIntent
@@ -17,6 +19,17 @@ class AssistantChatRequest(BaseModel):
         return cleaned
 
 
+class AssistantBookingDepositCartPayload(BaseModel):
+    type: Literal["booking_deposit"] = "booking_deposit"
+    status: Literal["pending_deposit"] = "pending_deposit"
+    deposit_percentage: int = Field(..., ge=0, le=100)
+    service_label: str = Field(..., min_length=1)
+    professional_label: str = Field(..., min_length=1)
+    requested_day: str = Field(..., min_length=1)
+    requested_time: str = Field(..., min_length=1)
+    confirmation_status: Literal["not_confirmed"] = "not_confirmed"
+
+
 class AssistantChatResponse(BaseModel):
     session_id: str
     intent: AssistantIntent
@@ -25,3 +38,5 @@ class AssistantChatResponse(BaseModel):
     requires_deposit: bool
     deposit_percentage: int
     next_actions: list[str]
+    redirect_target: str | None = None
+    cart_payload: AssistantBookingDepositCartPayload | None = None
