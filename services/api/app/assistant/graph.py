@@ -3,7 +3,10 @@ from app.assistant.policies import get_booking_conversion_flow_step
 from app.assistant.state import AssistantFlowStep, AssistantIntent, AssistantState
 from app.assistant.tools.booking_tools import build_booking_guidance
 from app.assistant.tools.catalog_tools import build_product_guidance
-from app.assistant.tools.cart_tools import build_cart_next_actions
+from app.assistant.tools.cart_tools import (
+    build_cart_next_actions,
+    detects_deposit_handoff_intent,
+)
 from app.assistant.tools.payment_tools import get_booking_deposit_policy
 
 try:
@@ -59,8 +62,9 @@ def classify_intent_node(state: AssistantState) -> AssistantState:
     has_product_signal = any(
         keyword in normalized_message for keyword in PRODUCT_KEYWORDS
     )
+    has_deposit_handoff = detects_deposit_handoff_intent(state["message"])
 
-    if has_booking_action:
+    if has_booking_action or has_deposit_handoff:
         intent = AssistantIntent.BOOKING.value
     elif has_product_signal:
         intent = AssistantIntent.PRODUCT_RECOMMENDATION.value
@@ -90,6 +94,8 @@ def booking_node(state: AssistantState) -> AssistantState:
         "requires_deposit": bool(deposit_policy["requires_deposit"]),
         "deposit_percentage": int(deposit_policy["deposit_percentage"]),
         "next_actions": list(guidance["next_actions"]),
+        "redirect_target": guidance.get("redirect_target"),
+        "cart_payload": guidance.get("cart_payload"),
     }
 
 

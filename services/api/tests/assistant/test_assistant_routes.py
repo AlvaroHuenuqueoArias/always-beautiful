@@ -18,9 +18,11 @@ FORBIDDEN_BOOKING_CONFIRMATION_COPY = (
 
 
 def assert_no_confirmed_booking_copy(body):
+    cart_payload = body.get("cart_payload") or {}
     combined_text = (
         f"{body.get('message', '')} "
-        f"{' '.join(body.get('next_actions', []))}"
+        f"{' '.join(body.get('next_actions', []))} "
+        f"{' '.join(str(value) for value in cart_payload.values())}"
     ).lower()
 
     for forbidden_copy in FORBIDDEN_BOOKING_CONFIRMATION_COPY:
@@ -126,6 +128,87 @@ def test_assistant_unavailable_time_suggests_alternatives():
     assert_no_confirmed_booking_copy(body)
 
 
+def test_assistant_builds_safe_cart_handoff_for_complete_booking_deposit():
+    response = client.post(
+        "/assistant/chat",
+        json={
+            "session_id": "complete-booking-handoff-session",
+            "message": (
+                "Quiero reservar una limpieza facial con María Ignacia el "
+                "miércoles a las 15:00. Continuar y pagar abono del 20%."
+            ),
+            "channel": "web",
+        },
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    cart_payload = body["cart_payload"]
+
+    assert body["intent"] == "booking"
+    assert body["requires_deposit"] is True
+    assert body["deposit_percentage"] == BOOKING_DEPOSIT_PERCENTAGE
+    assert body["redirect_target"] == "/cart"
+    assert cart_payload["type"] == "booking_deposit"
+    assert cart_payload["status"] == "pending_deposit"
+    assert cart_payload["deposit_percentage"] == BOOKING_DEPOSIT_PERCENTAGE
+    assert cart_payload["service_label"] == "Limpieza facial"
+    assert cart_payload["professional_label"] == "María Ignacia"
+    assert cart_payload["requested_day"] == "miércoles"
+    assert cart_payload["requested_time"] == "15:00"
+    assert cart_payload["confirmation_status"] == "not_confirmed"
+    assert "Ir al carrito para revisar el abono pendiente." in body["next_actions"]
+    assert_no_confirmed_booking_copy(body)
+
+
+def test_assistant_incomplete_booking_deposit_handoff_requests_missing_data():
+    response = client.post(
+        "/assistant/chat",
+        json={
+            "session_id": "incomplete-booking-handoff-session",
+            "message": "Continuar y pagar abono del 20%.",
+            "channel": "web",
+        },
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+
+    assert body["intent"] == "booking"
+    assert body["redirect_target"] is None
+    assert body["cart_payload"] is None
+    assert "necesito definir" in body["message"]
+    assert "servicio" in body["message"]
+    assert "profesional" in body["message"]
+    assert "día" in body["message"]
+    assert "hora" in body["message"]
+    assert_no_confirmed_booking_copy(body)
+
+
+def test_assistant_blocks_nadia_cosmetology_before_cart_handoff():
+    response = client.post(
+        "/assistant/chat",
+        json={
+            "session_id": "nadia-block-before-handoff-session",
+            "message": (
+                "Quiero reservar una limpieza facial con Nadia Luisa el "
+                "miércoles a las 15:00. Continuar y pagar abono del 20%."
+            ),
+            "channel": "web",
+        },
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+
+    assert body["intent"] == "booking"
+    assert body["flow_step"] == AssistantFlowStep.PROFESSIONAL_SELECTION.value
+    assert body["redirect_target"] is None
+    assert body["cart_payload"] is None
+    assert "Nadia Luisa no realiza servicios de cosmetología" in body["message"]
+    assert_no_confirmed_booking_copy(body)
+
+
 def test_assistant_detects_product_purchase_intent():
     response = client.post(
         "/assistant/chat",
@@ -142,7 +225,28 @@ def test_assistant_detects_product_purchase_intent():
     assert body["flow_step"] == AssistantFlowStep.PRODUCT_SELECTION.value
     assert body["requires_deposit"] is False
     assert body["deposit_percentage"] == 0
+    assert body["redirect_target"] is None
+    assert body["cart_payload"] is None
     assert "carrito" in " ".join(body["next_actions"]).lower()
+    assert_no_confirmed_booking_copy(body)
+
+
+def test_assistant_product_flow_does_not_generate_booking_handoff():
+    response = client.post(
+        "/assistant/chat",
+        json={
+            "session_id": "product-no-booking-handoff-session",
+            "message": "Quiero comprar un producto para cuidar el cabello.",
+            "channel": "web",
+        },
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+
+    assert body["intent"] == "product_recommendation"
+    assert body["redirect_target"] is None
+    assert body["cart_payload"] is None
     assert_no_confirmed_booking_copy(body)
 
 
