@@ -24,7 +24,10 @@ class AssistantService:
             "session_id": payload.session_id,
             "message": payload.message,
             "channel": payload.channel.value,
-            "metadata": {"history_size": len(history)},
+            "metadata": {
+                "history_size": len(history),
+                "context": payload.context or {},
+            },
         }
 
         result = self.graph_runner.run(state)
@@ -41,6 +44,8 @@ class AssistantService:
             next_actions=result["next_actions"],
             redirect_target=result.get("redirect_target"),
             cart_payload=result.get("cart_payload"),
+            context=result.get("context", {}),
+            quick_replies=result.get("quick_replies", []),
         )
 
         self.memory.append_turn(payload.session_id, "user", payload.message)

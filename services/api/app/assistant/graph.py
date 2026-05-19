@@ -1,5 +1,13 @@
 from app.assistant.prompts import build_prompt_messages
-from app.assistant.policies import get_booking_conversion_flow_step
+from app.assistant.policies import (
+    SERVICE_CATEGORY_UNKNOWN,
+    detect_requested_professional,
+    detect_service_category,
+    detects_all_services_intent,
+    detects_booking_intent,
+    detects_product_intent,
+    get_booking_conversion_flow_step,
+)
 from app.assistant.state import AssistantFlowStep, AssistantIntent, AssistantState
 from app.assistant.tools.booking_tools import build_booking_guidance
 from app.assistant.tools.catalog_tools import build_product_guidance
@@ -16,55 +24,31 @@ except ImportError:
     StateGraph = None
 
 
-BOOKING_ACTION_KEYWORDS = {
-    "agenda",
-    "agendar",
-    "cita",
-    "hora",
-    "reservar",
-    "reserva",
-}
-
-BOOKING_SERVICE_KEYWORDS = {
-    "servicio",
-    "tratamiento",
-    "peinado",
-    "corte",
-    "facial",
-    "estilismo",
-}
-
-PRODUCT_KEYWORDS = {
-    "comprar",
-    "compra",
-    "producto",
-    "carrito",
-    "shampoo",
-    "crema",
-    "serum",
-    "mascarilla",
-    "recomienda",
-    "recomendación",
-}
-
-
 def classify_intent_node(state: AssistantState) -> AssistantState:
-    normalized_message = state["message"].lower()
     prompt_messages = build_prompt_messages(state["message"])
-    has_booking_action = any(
-        keyword in normalized_message
-        for keyword in BOOKING_ACTION_KEYWORDS
+    context = state.get("metadata", {}).get("context", {})
+    has_booking_action = detects_booking_intent(state["message"])
+    has_booking_service = (
+        detect_service_category(state["message"]) != SERVICE_CATEGORY_UNKNOWN
     )
-    has_booking_service = any(
-        keyword in normalized_message
-        for keyword in BOOKING_SERVICE_KEYWORDS
-    )
-    has_product_signal = any(
-        keyword in normalized_message for keyword in PRODUCT_KEYWORDS
-    )
+    has_product_signal = detects_product_intent(state["message"])
     has_deposit_handoff = detects_deposit_handoff_intent(state["message"])
+    has_professional_signal = detect_requested_professional(state["message"]) is not None
+    has_all_services_signal = detects_all_services_intent(state["message"])
+    has_booking_context = isinstance(context, dict) and bool(
+        context.get("selected_professional")
+        or context.get("selected_service")
+        or context.get("requested_day")
+        or context.get("requested_time")
+    )
 
-    if has_booking_action or has_deposit_handoff:
+    if (
+        has_booking_action
+        or has_deposit_handoff
+        or has_professional_signal
+        or has_all_services_signal
+        or has_booking_context
+    ):
         intent = AssistantIntent.BOOKING.value
     elif has_product_signal:
         intent = AssistantIntent.PRODUCT_RECOMMENDATION.value
@@ -84,18 +68,24 @@ def classify_intent_node(state: AssistantState) -> AssistantState:
 
 
 def booking_node(state: AssistantState) -> AssistantState:
-    guidance = build_booking_guidance(state["message"])
+    context = state.get("metadata", {}).get("context", {})
+    guidance = build_booking_guidance(state["message"], context)
     deposit_policy = get_booking_deposit_policy()
 
     return {
         **state,
-        "flow_step": get_booking_conversion_flow_step(state["message"]),
+        "flow_step": guidance.get(
+            "flow_step",
+            get_booking_conversion_flow_step(state["message"]),
+        ),
         "response_message": str(guidance["message"]),
         "requires_deposit": bool(deposit_policy["requires_deposit"]),
         "deposit_percentage": int(deposit_policy["deposit_percentage"]),
         "next_actions": list(guidance["next_actions"]),
         "redirect_target": guidance.get("redirect_target"),
         "cart_payload": guidance.get("cart_payload"),
+        "context": guidance.get("context", {}),
+        "quick_replies": list(guidance.get("quick_replies", [])),
     }
 
 
@@ -110,6 +100,19 @@ def product_recommendation_node(state: AssistantState) -> AssistantState:
         "requires_deposit": False,
         "deposit_percentage": 0,
         "next_actions": next_actions,
+        "context": {
+            "intent": AssistantIntent.PRODUCT_RECOMMENDATION.value,
+            "flow_step": AssistantFlowStep.PRODUCT_SELECTION.value,
+        },
+        "quick_replies": [
+            {
+                "label": "Ver productos",
+                "message": "Quiero ver productos disponibles para comprar",
+                "action_type": "navigate",
+                "target": "/products",
+                "payload": {"reason": "product_catalog"},
+            }
+        ],
     }
 
 
@@ -118,15 +121,43 @@ def general_node(state: AssistantState) -> AssistantState:
         **state,
         "flow_step": AssistantFlowStep.COMPLETED.value,
         "response_message": (
-            "Puedo ayudarte a iniciar una reserva de servicio o tratamiento, "
-            "o a orientar una compra de productos desde la web."
+            "Hola, soy la asistente virtual de Always Beautiful. Puedo "
+            "ayudarte a reservar una hora, revisar servicios o ver productos. "
+            "¿Qué quieres hacer?"
         ),
         "requires_deposit": False,
         "deposit_percentage": 0,
         "next_actions": [
-            "Indicar si deseas reservar una hora.",
-            "Indicar si buscas una recomendación de producto.",
+            "Puedes iniciar una reserva guiada desde el chat.",
+            "También puedes pedir orientación de productos.",
         ],
+        "quick_replies": [
+            {
+                "label": "Reservar hora",
+                "message": "Quiero reservar una hora",
+                "action_type": "reply",
+                "target": None,
+                "payload": {"reason": "booking_start"},
+            },
+            {
+                "label": "Ver servicios",
+                "message": "Quiero ver todos los servicios disponibles",
+                "action_type": "navigate",
+                "target": "/services",
+                "payload": {"reason": "full_services_catalog"},
+            },
+            {
+                "label": "Ver productos",
+                "message": "Quiero comprar productos",
+                "action_type": "navigate",
+                "target": "/products",
+                "payload": {"reason": "product_start"},
+            },
+        ],
+        "context": {
+            "intent": AssistantIntent.GENERAL.value,
+            "flow_step": AssistantFlowStep.COMPLETED.value,
+        },
     }
 
 

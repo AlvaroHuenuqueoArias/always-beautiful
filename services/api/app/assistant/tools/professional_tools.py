@@ -5,7 +5,6 @@ from app.assistant.policies import (
     PROFESSIONAL_STYLIST,
     SERVICE_CATEGORY_COSMETOLOGY,
     SERVICE_CATEGORY_STYLING,
-    SERVICE_CATEGORY_TREATMENT,
 )
 
 
@@ -16,7 +15,6 @@ PROFESSIONALS = [
         "role": PROFESSIONAL_STYLIST,
         "can_cover": [
             SERVICE_CATEGORY_STYLING,
-            SERVICE_CATEGORY_TREATMENT,
             "hair",
         ],
         "blocked_categories": [SERVICE_CATEGORY_COSMETOLOGY],
@@ -35,6 +33,65 @@ PROFESSIONALS = [
         "blocked_categories": [],
     },
 ]
+
+FEATURED_SERVICES_BY_PROFESSIONAL = {
+    PROFESSIONAL_NADIA_LUISA: [
+        {
+            "label": "Corte profesional",
+            "service_label": "Corte profesional",
+        },
+        {
+            "label": "Brushing profesional",
+            "service_label": "Brushing profesional",
+        },
+        {
+            "label": "Peinado social",
+            "service_label": "Peinado social",
+        },
+        {
+            "label": "Tratamiento capilar",
+            "service_label": "Tratamiento capilar",
+        },
+        {
+            "label": "Coloración / raíz",
+            "service_label": "Coloración / raíz",
+        },
+    ],
+    PROFESSIONAL_MARIA_IGNACIA: [
+        {
+            "label": "Limpieza facial",
+            "service_label": "Limpieza facial",
+        },
+        {
+            "label": "Perfilado de cejas",
+            "service_label": "Perfilado de cejas",
+        },
+        {
+            "label": "Laminado de cejas",
+            "service_label": "Laminado de cejas",
+        },
+        {
+            "label": "Hidratación facial",
+            "service_label": "Hidratación facial",
+        },
+        {
+            "label": "Maquillaje",
+            "service_label": "Maquillaje",
+        },
+        {
+            "label": "Peinados femeninos",
+            "service_label": "Peinados femeninos",
+        },
+        {
+            "label": "Brushing",
+            "service_label": "Brushing",
+        },
+        {
+            "label": "Tratamiento capilar",
+            "service_label": "Tratamiento capilar",
+        },
+    ],
+}
 
 
 def list_professionals() -> list[dict[str, object]]:
@@ -64,3 +121,31 @@ def find_professionals_for_service(service_focus: str) -> list[dict[str, object]
     ]
 
     return matches or PROFESSIONALS
+
+
+def get_featured_services_for_professional(
+    professional_label: str,
+) -> list[dict[str, str]]:
+    return FEATURED_SERVICES_BY_PROFESSIONAL.get(professional_label, [])
+
+
+def get_primary_featured_services_for_professional(
+    professional_label: str,
+) -> list[dict[str, str]]:
+    featured_services = get_featured_services_for_professional(professional_label)
+
+    if professional_label == PROFESSIONAL_MARIA_IGNACIA:
+        return featured_services
+
+    return featured_services
+
+
+def get_secondary_featured_services_for_professional(
+    professional_label: str,
+) -> list[dict[str, str]]:
+    featured_services = get_featured_services_for_professional(professional_label)
+
+    if professional_label == PROFESSIONAL_MARIA_IGNACIA:
+        return featured_services[5:]
+
+    return []

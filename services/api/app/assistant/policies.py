@@ -1,4 +1,5 @@
 import re
+import unicodedata
 
 from app.assistant.state import AssistantFlowStep
 
@@ -13,11 +14,16 @@ PROFESSIONAL_MARIA_IGNACIA = "María Ignacia"
 SERVICE_CATEGORY_STYLING = "styling"
 SERVICE_CATEGORY_COSMETOLOGY = "cosmetology"
 SERVICE_CATEGORY_TREATMENT = "treatment"
+SERVICE_CATEGORY_NAILS = "nails"
 SERVICE_CATEGORY_UNKNOWN = "unknown"
 
 NADIA_LUISA_KEYWORDS = {
     "nadia",
     "nadia luisa",
+    "luisa",
+    "con nadia",
+    "estilista",
+    "peluquera",
 }
 
 MARIA_IGNACIA_KEYWORDS = {
@@ -26,21 +32,47 @@ MARIA_IGNACIA_KEYWORDS = {
     "ignacia",
     "maria ignacia",
     "maría ignacia",
+    "con maria",
+    "con maría",
+    "cosmetologa",
+    "cosmetóloga",
 }
 
 STYLING_SERVICE_KEYWORDS = {
     "cabello",
+    "pelo",
     "corte",
+    "corte profesional",
     "peinado",
     "brushing",
+    "brushing profesional",
     "tinte",
     "color",
     "coloración",
     "coloracion",
+    "raiz",
+    "raíz",
+    "coloracion raiz",
+    "coloración raíz",
     "alisado",
     "balayage",
     "estilismo",
     "styling",
+    "tratamiento capilar",
+    "hidratacion",
+    "hidratación",
+}
+
+NAIL_SERVICE_KEYWORDS = {
+    "manicure",
+    "unas",
+    "uñas",
+    "esmaltado",
+    "esmaltado permanente",
+    "soft gel",
+    "diseno de unas",
+    "diseño de uñas",
+    "retiro de esmaltado",
 }
 
 COSMETOLOGY_SERVICE_KEYWORDS = {
@@ -49,36 +81,65 @@ COSMETOLOGY_SERVICE_KEYWORDS = {
     "cosmetológica",
     "facial",
     "limpieza",
+    "limpieza facial",
     "piel",
     "skincare",
+    "cejas",
+    "perfilado",
+    "laminado",
     "depilación",
     "depilacion",
-    "manicure",
     "pedicure",
     "pestañas",
     "pestanas",
     "maquillaje",
+    "tratamiento facial",
 }
 
 TREATMENT_SERVICE_KEYWORDS = {
     "tratamiento",
     "botox",
     "masaje",
+    "preparacion para evento",
+    "preparación para evento",
+    "asesoria express",
+    "asesoría express",
 }
 
 BOOKING_CONVERSION_INTENT_KEYWORDS = {
     "agenda",
     "agendar",
+    "agendarme",
+    "agndar",
+    "ajendar",
     "cita",
     "hora",
+    "kiero hora",
     "reservar",
     "reserva",
+    "reserbar",
+    "recervar",
+    "quiero reservar",
+    "quiero agendar",
+    "quiero una hora",
+    "quiero tomar hora",
+    "necesito una cita",
+    "necesito hora",
+    "me quiero atender",
+    "me quiero hacer",
+    "tomar hora",
+    "reservar ora",
+    "tomar ora",
+    "hora disponible",
+    "tienen hora",
+    "tienen cupo",
 }
 
 PRODUCT_FLOW_KEYWORDS = {
     "comprar",
     "compra",
     "producto",
+    "productos",
     "carrito",
     "shampoo",
     "crema",
@@ -86,6 +147,8 @@ PRODUCT_FLOW_KEYWORDS = {
     "mascarilla",
     "recomienda",
     "recomendación",
+    "tratamiento para la casa",
+    "cuidado del cabello",
 }
 
 BOOKING_SERVICE_KEYWORDS = {
@@ -95,6 +158,13 @@ BOOKING_SERVICE_KEYWORDS = {
     "corte",
     "facial",
     "estilismo",
+    "limpieza facial",
+    "cejas",
+    "brushing",
+    "coloracion",
+    "coloración",
+    "cabello",
+    "pelo",
 }
 
 DAY_KEYWORDS = {
@@ -132,6 +202,55 @@ BOOKING_DEPOSIT_AVOIDANCE_PHRASES = {
     "me puedes agendar sin abono",
 }
 
+BOOKING_DEPOSIT_PAYMENT_PHRASES = {
+    "pagar abono",
+    "pagar",
+    "pagar el abono",
+    "pagar el 20",
+    "pagar 20%",
+    "20%",
+    "veinte por ciento",
+    "abonar",
+    "hacer abono",
+    "ir a pagar",
+    "ir al carrito",
+    "pago ahora",
+    "continuar pago",
+    "continuar y pagar",
+    "pagar reserva",
+    "pagar hora",
+    "carrito",
+    "checkout",
+    "cancelar abono",
+    "cancelar el abono",
+}
+
+ALL_SERVICES_PHRASES = {
+    "todos los servicios",
+    "ver servicios",
+    "ver todos los servicios",
+    "servicios disponibles",
+    "listado de servicios",
+    "catalogo de servicios",
+    "catálogo de servicios",
+    "otros servicios",
+    "ver mas",
+    "ver más",
+    "mas servicios",
+    "más servicios",
+}
+
+
+def normalize_message_text(value: str) -> str:
+    normalized = unicodedata.normalize("NFKD", value.lower())
+    without_accents = "".join(
+        character
+        for character in normalized
+        if not unicodedata.combining(character)
+    )
+
+    return " ".join(without_accents.split())
+
 
 def booking_deposit_notice() -> str:
     return (
@@ -155,18 +274,41 @@ def booking_deposit_required_notice() -> str:
 
 
 def detects_booking_deposit_avoidance(message: str) -> bool:
-    normalized_message = message.lower()
+    normalized_message = normalize_message_text(message)
     return any(
-        phrase in normalized_message
+        normalize_message_text(phrase) in normalized_message
         for phrase in BOOKING_DEPOSIT_AVOIDANCE_PHRASES
     )
 
 
 def _contains_any_keyword(message: str, keywords: set[str]) -> bool:
-    return any(keyword in message for keyword in keywords)
+    normalized_message = normalize_message_text(message)
+
+    return any(
+        normalize_message_text(keyword) in normalized_message
+        for keyword in keywords
+    )
+
+
+def detects_booking_intent(message: str) -> bool:
+    return _contains_any_keyword(message, BOOKING_CONVERSION_INTENT_KEYWORDS)
+
+
+def detects_product_intent(message: str) -> bool:
+    return _contains_any_keyword(message, PRODUCT_FLOW_KEYWORDS)
+
+
+def detects_deposit_payment_intent(message: str) -> bool:
+    return _contains_any_keyword(message, BOOKING_DEPOSIT_PAYMENT_PHRASES)
+
+
+def detects_all_services_intent(message: str) -> bool:
+    return _contains_any_keyword(message, ALL_SERVICES_PHRASES)
 
 
 def _contains_time_signal(message: str) -> bool:
+    message = normalize_message_text(message)
+
     if re.search(r"\b(?:a las|a la)\s+\d{1,2}\b", message):
         return True
 
@@ -180,11 +322,11 @@ def _contains_time_signal(message: str) -> bool:
 
 
 def detect_has_day_signal(message: str) -> bool:
-    return _contains_any_keyword(message.lower(), DAY_KEYWORDS)
+    return _contains_any_keyword(message, DAY_KEYWORDS)
 
 
 def detect_has_time_signal(message: str) -> bool:
-    return _contains_time_signal(message.lower())
+    return _contains_time_signal(message)
 
 
 def _normalize_time_label(hour: int, minute: int = 0, period: str = "") -> str:
@@ -201,7 +343,7 @@ def _normalize_time_label(hour: int, minute: int = 0, period: str = "") -> str:
 
 
 def detect_requested_time_label(message: str) -> str | None:
-    normalized_message = message.lower()
+    normalized_message = normalize_message_text(message)
 
     explicit_time_match = re.search(
         r"\b([01]?\d|2[0-3])[:.]([0-5]\d)\b",
@@ -253,9 +395,9 @@ def detect_requested_time_label(message: str) -> str | None:
 
 
 def get_booking_conversion_flow_step(message: str) -> str:
-    normalized_message = message.lower()
+    normalized_message = normalize_message_text(message)
 
-    if _contains_any_keyword(normalized_message, PRODUCT_FLOW_KEYWORDS):
+    if detects_product_intent(normalized_message):
         return AssistantFlowStep.PRODUCT_SELECTION.value
 
     if detects_booking_deposit_avoidance(normalized_message):
@@ -264,10 +406,7 @@ def get_booking_conversion_flow_step(message: str) -> str:
     if get_professional_service_incompatibility(normalized_message):
         return AssistantFlowStep.PROFESSIONAL_SELECTION.value
 
-    has_booking_intent = _contains_any_keyword(
-        normalized_message,
-        BOOKING_CONVERSION_INTENT_KEYWORDS,
-    )
+    has_booking_intent = detects_booking_intent(normalized_message)
     has_service_signal = _contains_any_keyword(
         normalized_message,
         BOOKING_SERVICE_KEYWORDS,
@@ -291,7 +430,7 @@ def get_booking_conversion_flow_step(message: str) -> str:
 
 
 def detect_requested_professional(message: str) -> str | None:
-    normalized_message = message.lower()
+    normalized_message = normalize_message_text(message)
     requested_professionals = []
 
     if _contains_any_keyword(normalized_message, NADIA_LUISA_KEYWORDS):
@@ -307,7 +446,10 @@ def detect_requested_professional(message: str) -> str | None:
 
 
 def detect_service_category(message: str) -> str:
-    normalized_message = message.lower()
+    normalized_message = normalize_message_text(message)
+
+    if _contains_any_keyword(normalized_message, NAIL_SERVICE_KEYWORDS):
+        return SERVICE_CATEGORY_NAILS
 
     if _contains_any_keyword(normalized_message, COSMETOLOGY_SERVICE_KEYWORDS):
         return SERVICE_CATEGORY_COSMETOLOGY
