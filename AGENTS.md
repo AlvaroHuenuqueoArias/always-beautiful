@@ -777,3 +777,272 @@ Codex no mejora libremente.
 Codex ejecuta cambios autorizados, en archivos autorizados, con validación obligatoria y feedback técnico.
 
 El usuario mantiene la dirección técnica del proyecto. Codex actúa como ejecutor técnico controlado.
+
+---
+
+## Regla 22 — Orquestación de IA con Codex CLI y DeepSeek
+
+Este repositorio puede ser asistido por tres IA operativas: Codex CLI, DeepSeek V4 Flash y DeepSeek V4 Pro. Todos los agentes deben respetar este archivo `AGENTS.md` como fuente principal de gobernanza técnica.
+
+Gemini/OpenRouter queda pausado como agente operativo debido a límites de créditos y `max_tokens` en OpenRouter. No debe considerarse parte del flujo activo hasta que el usuario confirme que OpenRouter puede usarse de forma estable.
+
+### 22.1 Jerarquía oficial de agentes
+
+1. Codex CLI / OpenAI Plus
+   Rol: Principal Fullstack Software Engineer.
+   Autoridad: máxima autoridad técnica para cambios complejos, arquitectura, integración final, revisión de Pull Requests y cierre de decisiones críticas.
+
+2. DeepSeek V4 Flash vía OpenCode
+   Rol: Backend Developer / Backend Debugging Assistant.
+   Alcance: FastAPI, Python, Pydantic, SQLAlchemy, rutas, schemas, services, repositories, pytest, curl y diagnóstico de errores backend.
+   Configuración recomendada: DeepSeek V4 Flash con effort Medium para uso diario.
+
+3. DeepSeek V4 Pro vía OpenCode
+   Rol: Frontend Advanced / Architecture Reviewer.
+   Alcance: React, Vite, CSS controlado, Storefront público, assistant UI, booking conversion flow, revisión de contratos frontend-backend, transición assistant → cart y problemas complejos de integración.
+   Configuración recomendada: DeepSeek V4 Pro con effort Medium para revisión avanzada y High solo en problemas complejos.
+
+### 22.2 Regla central de trabajo
+
+Una sola IA puede modificar archivos por turno.
+
+Las demás IA pueden leer, diagnosticar, revisar, planificar o auditar, pero no deben modificar archivos al mismo tiempo en la misma rama.
+
+Codex CLI conserva la autoridad técnica final.
+
+### 22.3 Codex CLI
+
+Codex CLI es el agente principal.
+
+Debe usarse para:
+
+- arquitectura compleja
+- integración frontend/backend
+- decisiones de software engineering
+- refactors grandes
+- pagos/envíos reales
+- seguridad
+- assistant intelligence avanzada
+- LangChain/LangGraph
+- Machine Learning
+- preparación final de Pull Requests
+- revisión final de cambios hechos por DeepSeek
+- decisión de commit
+- decisión de push
+- decisión de Pull Request
+- cierre técnico de rama
+
+Codex CLI no debe actuar como agente libre. Debe revisar el handoff, explicar riesgos y solicitar autorización antes de modificar archivos sensibles.
+
+### 22.4 DeepSeek V4 Flash — Backend
+
+DeepSeek V4 Flash debe usarse como agente auxiliar técnico de backend, debugging y validaciones.
+
+Puede trabajar en:
+
+- `services/api/app/assistant/*`
+- `services/api/app/assistant/tools/*`
+- `services/api/app/booking/*`
+- `services/api/app/catalog/*`
+- `services/api/app/cart/*`
+- `services/api/app/orders/*`
+- `services/api/app/schedule/*`
+- `services/api/app/notifications/*`
+- `services/api/tests/*`
+
+Puede ejecutar, con autorización:
+
+```bash
+cd services/api
+source .venv/bin/activate
+pytest
+deactivate
+cd ../..
+git status --short
+```
+
+No debe tocar frontend visual salvo autorización explícita.
+
+No debe modificar:
+
+- `web/*`
+- `AGENTS.md`
+- `.env`
+- `services/api/requirements.txt`
+- `web/package.json`
+- `web/package-lock.json`
+- archivos de configuración sensible
+- archivos de Git
+- documentación estratégica salvo autorización explícita
+
+### 22.5 DeepSeek V4 Pro — Frontend avanzado / arquitectura
+
+DeepSeek V4 Pro debe usarse como agente auxiliar para frontend avanzado, revisión de arquitectura y problemas complejos.
+
+Puede diagnosticar o modificar, con autorización:
+
+- `web/src/services/assistantClient.js`
+- `web/src/components/shared/AssistantChatPanel.jsx`
+- `web/src/components/shared/AssistantChatWidget.jsx`
+- `web/src/components/shared/AssistantComposer.jsx`
+- `web/src/components/shared/AssistantMessageList.jsx`
+- `web/src/components/shared/FloatingAssistantButton.jsx`
+- `web/src/components/shared/PublicHeader.jsx`
+- `web/src/pages/public/CartPage.jsx`
+- `web/src/pages/public/BookingPage.jsx`
+- `web/src/pages/public/CheckoutPage.jsx`
+- `web/src/pages/public/ProductsPage.jsx`
+- `web/src/pages/public/ServicesPage.jsx`
+- `web/src/components/storefront/*`
+- `web/src/layouts/PublicLayout.jsx`
+- `web/src/data/storefront/*`
+- `web/src/index.css` solo con autorización explícita
+
+Puede ejecutar, con autorización:
+
+```bash
+npm --prefix web run build
+git diff --check
+git status --short
+```
+
+No debe tocar backend salvo autorización explícita.
+
+No debe modificar:
+
+- `services/api/*` sin autorización explícita
+- `AGENTS.md`
+- `.env`
+- `web/package.json`
+- `web/package-lock.json`
+- dependencias
+- archivos de configuración sensible
+- archivos Git
+- Dashboard administrativo salvo autorización explícita
+
+### 22.6 OpenRouter/Gemini — Estado pausado
+
+Gemini 3 Flash Preview vía OpenCode + OpenRouter queda pausado como agente operativo.
+
+Motivo:
+
+- OpenRouter devolvió error de créditos/max_tokens.
+- El flujo gratuito no es estable para el nivel de contexto requerido por este repositorio.
+- El proyecto no debe depender de una IA que no puede ejecutar diagnósticos largos de forma confiable.
+
+Gemini/OpenRouter podrá reactivarse solo si el usuario confirma que:
+
+- OpenRouter tiene créditos suficientes.
+- La API key no tiene límites restrictivos.
+- El modelo seleccionado funciona con prompts largos.
+- No afecta el flujo operativo principal.
+
+Mientras esté pausado:
+
+- no debe aparecer como agente activo
+- no debe recibir tareas críticas
+- no debe ser requisito para avanzar
+- no debe bloquear decisiones de DeepSeek o Codex
+
+### 22.7 Prohibiciones para todos los agentes
+
+Ningún agente puede ejecutar sin autorización explícita:
+
+- `git add`
+- `git commit`
+- `git push`
+- `git merge`
+- `git reset --hard`
+- `git clean`
+- `git branch -D`
+- crear Pull Request
+- cerrar Pull Request
+- mergear Pull Request
+- instalar dependencias
+- editar `.env`
+- modificar credenciales
+- tocar `package.json`
+- tocar `package-lock.json`
+- tocar `requirements.txt`
+- ejecutar curl’s manuales sin autorización
+- modificar archivos sensibles fuera del alcance autorizado
+
+### 22.8 Archivos obligatorios de coordinación
+
+Antes de trabajar, todo agente debe leer:
+
+- `AGENTS.md`
+- `docs/ai-handoff/ACTIVE_CONTEXT.md`
+- `docs/ai-handoff/AGENT_ROLES.md`
+- `docs/ai-handoff/CHANGELOG_AI.md`
+
+Si el agente trabaja frontend, debe leer también:
+
+- `docs/ai-handoff/FRONTEND_HANDOFF.md`
+
+Si el agente trabaja backend, debe leer también:
+
+- `docs/ai-handoff/BACKEND_HANDOFF.md`
+
+Si Codex CLI debe retomar trabajo después de DeepSeek, se debe actualizar:
+
+- `docs/ai-handoff/CODEX_REENTRY.md`
+
+### 22.9 Registro obligatorio
+
+Después de cada diagnóstico, implementación, fix o validación, el agente debe actualizar:
+
+- `docs/ai-handoff/CHANGELOG_AI.md`
+- `docs/ai-handoff/ACTIVE_CONTEXT.md`
+
+Debe registrar:
+
+- fecha y hora
+- modelo usado
+- herramienta usada
+- rama actual
+- archivos leídos
+- archivos modificados
+- comandos ejecutados
+- resultado de build/test/curl
+- errores encontrados
+- riesgos pendientes
+- siguiente paso recomendado
+- si Codex CLI debe revisar algo
+
+Si el trabajo fue backend, debe actualizar también:
+
+- `docs/ai-handoff/BACKEND_HANDOFF.md`
+
+Si el trabajo fue frontend, debe actualizar también:
+
+- `docs/ai-handoff/FRONTEND_HANDOFF.md`
+
+### 22.10 Reentrada de Codex CLI
+
+Cuando Codex CLI vuelva a trabajar después de una sesión de OpenCode/DeepSeek, debe leer primero:
+
+- `AGENTS.md`
+- `docs/ai-handoff/ACTIVE_CONTEXT.md`
+- `docs/ai-handoff/CHANGELOG_AI.md`
+- `docs/ai-handoff/CODEX_REENTRY.md`
+
+Luego debe ejecutar:
+
+```bash
+git rev-parse --abbrev-ref HEAD
+git status --short
+git diff --stat
+git diff --check
+```
+
+Codex CLI debe revisar los cambios realizados por DeepSeek antes de continuar.
+
+Codex CLI debe decidir:
+
+- si el cambio está dentro del alcance
+- si requiere tests adicionales
+- si requiere build frontend
+- si requiere separación de commits
+- si puede avanzar a commit
+- si puede abrir Pull Request
