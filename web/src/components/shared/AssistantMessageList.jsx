@@ -1,5 +1,7 @@
+import { useEffect, useRef } from "react";
+
 const DEPOSIT_WARNING =
-    "Para confirmar la hora se debe cancelar el 20% del valor del servicio desde la web.";
+    "La hora queda pendiente hasta confirmación del salón y abono web.";
 
 const COMMERCIAL_COPY_REPLACEMENTS = [
     {
@@ -32,23 +34,47 @@ function getRoleLabel(role) {
     return role === "user" ? "Tú" : "Asistente";
 }
 
-function getQuickReplyActions(nextActions) {
+function getInformationalActions(nextActions) {
     if (!Array.isArray(nextActions)) {
         return [];
     }
 
     return nextActions
-        .map((action) => ({
-            action,
-            label: sanitizeCommercialCopy(action),
-        }))
-        .filter(
-            ({ action, label }) =>
-                typeof action === "string" && action.trim() && label.trim()
-        );
+        .map((action) => sanitizeCommercialCopy(action))
+        .filter((action) => action.trim());
 }
 
-export default function AssistantMessageList({ messages = [], onQuickReply }) {
+function getQuickReplyActions(quickReplies) {
+    if (!Array.isArray(quickReplies)) {
+        return [];
+    }
+
+    return quickReplies
+        .map((quickReply) => ({
+            ...quickReply,
+            label: sanitizeCommercialCopy(quickReply?.label),
+            message:
+                typeof quickReply?.message === "string"
+                    ? quickReply.message
+                    : "",
+        }))
+        .filter(({ label, message }) => label.trim() && message.trim());
+}
+
+export default function AssistantMessageList({
+    messages = [],
+    onQuickReply,
+    disabled = false,
+}) {
+    const endOfMessagesRef = useRef(null);
+
+    useEffect(() => {
+        endOfMessagesRef.current?.scrollIntoView({
+            behavior: "smooth",
+            block: "end",
+        });
+    }, [messages.length]);
+
     return (
         <div
             className="assistant-message-list"
@@ -57,7 +83,12 @@ export default function AssistantMessageList({ messages = [], onQuickReply }) {
             aria-relevant="additions text"
         >
             {messages.map((message) => {
-                const quickReplyActions = getQuickReplyActions(message.nextActions);
+                const informationalActions = getInformationalActions(
+                    message.nextActions
+                );
+                const quickReplyActions = getQuickReplyActions(
+                    message.quickReplies
+                );
 
                 return (
                     <article
@@ -72,10 +103,20 @@ export default function AssistantMessageList({ messages = [], onQuickReply }) {
                             {sanitizeCommercialCopy(message.content)}
                         </p>
 
-                        {message.requiresDeposit && (
+                        {message.cartPayload && (
                             <p className="assistant-message__deposit-warning">
                                 {DEPOSIT_WARNING}
                             </p>
+                        )}
+
+                        {informationalActions.length > 0 && (
+                            <ul className="assistant-message__next-actions">
+                                {informationalActions.map((action, index) => (
+                                    <li key={`${message.id}-next-${index}`}>
+                                        {action}
+                                    </li>
+                                ))}
+                            </ul>
                         )}
 
                         {quickReplyActions.length > 0 && (
@@ -83,14 +124,15 @@ export default function AssistantMessageList({ messages = [], onQuickReply }) {
                                 className="assistant-message__quick-replies"
                                 aria-label="Acciones rápidas"
                             >
-                                {quickReplyActions.map(({ action, label }, index) => (
+                                {quickReplyActions.map((quickReply, index) => (
                                     <button
-                                        key={`${message.id}-${index}-${label}`}
+                                        key={`${message.id}-${index}-${quickReply.label}`}
                                         type="button"
                                         className="assistant-message__quick-reply"
-                                        onClick={() => onQuickReply?.(action)}
+                                        disabled={disabled}
+                                        onClick={() => onQuickReply?.(quickReply)}
                                     >
-                                        {label}
+                                        {quickReply.label}
                                     </button>
                                 ))}
                             </div>
@@ -98,6 +140,7 @@ export default function AssistantMessageList({ messages = [], onQuickReply }) {
                     </article>
                 );
             })}
+            <div ref={endOfMessagesRef} aria-hidden="true" />
         </div>
     );
 }

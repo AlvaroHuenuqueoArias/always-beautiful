@@ -1,15 +1,80 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 import { STOREFRONT_CART_ITEM, STOREFRONT_NAV_ITEMS } from "../../design/tokens";
 
+const ASSISTANT_CART_HANDOFF_STORAGE_KEY =
+    "always-beautiful:assistant-cart-handoff";
+const ASSISTANT_CART_DRAFT_STORAGE_KEY =
+    "alwaysBeautifulAssistantCartDraft";
+const ASSISTANT_CART_UPDATED_EVENT =
+    "alwaysBeautifulAssistantCartUpdated";
+
+function readJsonStorageItem(key) {
+    const storage = globalThis.sessionStorage;
+
+    if (!storage) {
+        return null;
+    }
+
+    try {
+        return JSON.parse(storage.getItem(key));
+    } catch {
+        return null;
+    }
+}
+
+function getAssistantCartCount() {
+    const cartHandoff = readJsonStorageItem(ASSISTANT_CART_HANDOFF_STORAGE_KEY);
+    const cartDraft = readJsonStorageItem(ASSISTANT_CART_DRAFT_STORAGE_KEY);
+    const payloadItems = Array.isArray(cartHandoff?.items)
+        ? cartHandoff.items
+        : [];
+    const draftItems = Array.isArray(cartDraft?.cart_items)
+        ? cartDraft.cart_items
+        : [];
+
+    if (payloadItems.length > 0) {
+        return payloadItems.length;
+    }
+
+    return draftItems.length;
+}
+
 export default function PublicHeader() {
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [assistantCartCount, setAssistantCartCount] = useState(
+        getAssistantCartCount
+    );
 
     const mobileNavItems = STOREFRONT_NAV_ITEMS;
+    const cartAriaLabel =
+        assistantCartCount > 0
+            ? `${STOREFRONT_CART_ITEM.ariaLabel} (${assistantCartCount})`
+            : STOREFRONT_CART_ITEM.ariaLabel;
 
     function closeMobileMenu() {
         setIsMenuOpen(false);
     }
+
+    useEffect(() => {
+        function refreshAssistantCartCount() {
+            setAssistantCartCount(getAssistantCartCount());
+        }
+
+        globalThis.addEventListener?.("storage", refreshAssistantCartCount);
+        globalThis.addEventListener?.(
+            ASSISTANT_CART_UPDATED_EVENT,
+            refreshAssistantCartCount
+        );
+
+        return () => {
+            globalThis.removeEventListener?.("storage", refreshAssistantCartCount);
+            globalThis.removeEventListener?.(
+                ASSISTANT_CART_UPDATED_EVENT,
+                refreshAssistantCartCount
+            );
+        };
+    }, []);
 
     return (
         <header
@@ -80,7 +145,7 @@ export default function PublicHeader() {
                     <div className="public-header__cart-slot">
                         <NavLink
                             to={STOREFRONT_CART_ITEM.to}
-                            aria-label={STOREFRONT_CART_ITEM.ariaLabel}
+                            aria-label={cartAriaLabel}
                             className={({ isActive }) =>
                                 isActive
                                     ? "public-header__cart-link public-header__cart-link--active"
@@ -120,6 +185,11 @@ export default function PublicHeader() {
                                         />
                                     </svg>
                                 </span>
+                                {assistantCartCount > 0 ? (
+                                    <span className="public-header__cart-count">
+                                        {assistantCartCount}
+                                    </span>
+                                ) : null}
                             </span>
                         </NavLink>
                     </div>

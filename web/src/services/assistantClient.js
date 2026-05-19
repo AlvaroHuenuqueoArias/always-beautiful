@@ -2,6 +2,12 @@ const ASSISTANT_API_BASE_URL_FALLBACK = "http://127.0.0.1:8000";
 const ASSISTANT_SESSION_STORAGE_KEY =
     "always-beautiful:assistant-session-id";
 const ASSISTANT_ALLOWED_CHANNELS = new Set(["web", "whatsapp", "admin"]);
+const ASSISTANT_ALLOWED_TARGETS = new Set([
+    "/booking",
+    "/cart",
+    "/products",
+    "/services",
+]);
 
 export const ASSISTANT_CHANNEL_WEB = "web";
 
@@ -36,16 +42,72 @@ function assertNonBlankString(value, fieldName) {
     return value.trim();
 }
 
+function normalizeOptionalTarget(value) {
+    if (typeof value !== "string") {
+        return null;
+    }
+
+    const target = value.trim();
+    const targetPath = target.split("?")[0];
+
+    if (!ASSISTANT_ALLOWED_TARGETS.has(targetPath)) {
+        return null;
+    }
+
+    return target;
+}
+
+function normalizePayload(value) {
+    if (!value || typeof value !== "object" || Array.isArray(value)) {
+        return null;
+    }
+
+    return value;
+}
+
+function normalizeQuickReply(value) {
+    if (!value || typeof value !== "object" || Array.isArray(value)) {
+        return null;
+    }
+
+    const label = typeof value.label === "string" ? value.label.trim() : "";
+    const message =
+        typeof value.message === "string" ? value.message.trim() : "";
+    const actionType =
+        typeof value.action_type === "string"
+            ? value.action_type.trim()
+            : "";
+
+    if (!label || !message || !actionType) {
+        return null;
+    }
+
+    return {
+        label,
+        message,
+        actionType,
+        target: normalizeOptionalTarget(value.target),
+        payload: normalizePayload(value.payload),
+    };
+}
+
 function parseAssistantResponsePayload(payload) {
     return {
         sessionId: payload?.session_id,
         intent: payload?.intent,
+        flowStep: payload?.flow_step,
         message: payload?.message,
         requiresDeposit: Boolean(payload?.requires_deposit),
         depositPercentage: Number(payload?.deposit_percentage ?? 0),
         nextActions: Array.isArray(payload?.next_actions)
             ? payload.next_actions
             : [],
+        quickReplies: Array.isArray(payload?.quick_replies)
+            ? payload.quick_replies.map(normalizeQuickReply).filter(Boolean)
+            : [],
+        redirectTarget: normalizeOptionalTarget(payload?.redirect_target),
+        cartPayload: normalizePayload(payload?.cart_payload),
+        context: normalizePayload(payload?.context) || {},
         raw: payload,
     };
 }
@@ -97,6 +159,7 @@ export function getOrCreateAssistantSessionId() {
 export async function sendAssistantMessage({
     sessionId,
     message,
+    context,
     channel = ASSISTANT_CHANNEL_WEB,
 }) {
     const validatedSessionId = assertNonBlankString(sessionId, "sessionId");
@@ -118,6 +181,7 @@ export async function sendAssistantMessage({
             session_id: validatedSessionId,
             message: trimmedMessage,
             channel: validatedChannel,
+            context: normalizePayload(context),
         }),
     });
     const payload = await parseJsonSafely(response);
