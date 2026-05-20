@@ -6,6 +6,7 @@ from fastapi import HTTPException, status
 from app.cart.repository import CartRepository
 from app.cart.schemas import (
     BookingDepositDraftCreate,
+    BookingDepositDraftItemCreate,
     BookingDepositDraftItemResponse,
     BookingDepositDraftResponse,
     CartItemCreate,
@@ -38,22 +39,25 @@ class CartService:
         self,
         payload: BookingDepositDraftCreate,
     ) -> BookingDepositDraftResponse:
-        service_price = (
-            round(payload.service_price, 2)
-            if payload.service_price is not None
+        draft_items = self._build_booking_deposit_draft_items(payload)
+        item_prices = [item.service_price for item in draft_items]
+        has_complete_pricing = all(price is not None for price in item_prices)
+        total_amount = (
+            round(sum(price for price in item_prices if price is not None), 2)
+            if has_complete_pricing
             else None
         )
         deposit_amount = self._calculate_percentage_amount(
-            service_price,
+            total_amount,
             BOOKING_DEPOSIT_PERCENTAGE,
         )
         remaining_amount = self._calculate_percentage_amount(
-            service_price,
+            total_amount,
             BOOKING_REMAINING_PERCENTAGE,
         )
         amount_status = (
             "estimated"
-            if service_price is not None
+            if has_complete_pricing
             else "pending_final_price"
         )
         schedule_status = (
@@ -61,32 +65,22 @@ class CartService:
             if payload.requested_day and payload.requested_time
             else "pending_selection"
         )
-        draft_item = BookingDepositDraftItemResponse(
-            service_label=payload.service_label,
-            professional_label=payload.professional_label,
-            professional_id=payload.professional_id,
-            professional_role=payload.professional_role,
-            quantity=1,
-            service_price=service_price,
-            deposit_amount=deposit_amount,
-            remaining_amount=remaining_amount,
-            amount_status=amount_status,
-        )
 
         return BookingDepositDraftResponse(
             draft_id=self._build_booking_deposit_draft_id(payload),
             source=payload.source,
+            assistant_session_id=payload.assistant_session_id,
             deposit_percentage=BOOKING_DEPOSIT_PERCENTAGE,
             remaining_percentage=BOOKING_REMAINING_PERCENTAGE,
-            total_amount=service_price,
+            total_amount=total_amount,
             deposit_amount=deposit_amount,
             remaining_amount=remaining_amount,
             amount_status=amount_status,
             schedule_status=schedule_status,
             requested_day=payload.requested_day,
             requested_time=payload.requested_time,
-            cart_count=1,
-            items=[draft_item],
+            cart_count=len(draft_items),
+            items=draft_items,
         )
 
     def get_cart_by_id(self, cart_id: UUID) -> CartResponse:
@@ -283,20 +277,92 @@ class CartService:
 
         return round(amount * percentage / 100, 2)
 
+    def _build_booking_deposit_draft_items(
+        self,
+        payload: BookingDepositDraftCreate,
+    ) -> list[BookingDepositDraftItemResponse]:
+        items = payload.items or [
+            BookingDepositDraftItemCreate(
+                service_label=str(payload.service_label),
+                professional_label=str(payload.professional_label),
+                professional_id=payload.professional_id,
+                professional_role=payload.professional_role,
+                service_price=payload.service_price,
+            )
+        ]
+
+        return [
+            self._build_booking_deposit_draft_item(item)
+            for item in items
+        ]
+
+    def _build_booking_deposit_draft_item(
+        self,
+        item: BookingDepositDraftItemCreate,
+    ) -> BookingDepositDraftItemResponse:
+        service_price = (
+            round(item.service_price, 2)
+            if item.service_price is not None
+            else None
+        )
+        deposit_amount = self._calculate_percentage_amount(
+            service_price,
+            BOOKING_DEPOSIT_PERCENTAGE,
+        )
+        remaining_amount = self._calculate_percentage_amount(
+            service_price,
+            BOOKING_REMAINING_PERCENTAGE,
+        )
+        amount_status = (
+            "estimated"
+            if service_price is not None
+            else "pending_final_price"
+        )
+
+        return BookingDepositDraftItemResponse(
+            service_label=item.service_label,
+            professional_label=item.professional_label,
+            professional_id=item.professional_id,
+            professional_role=item.professional_role,
+            quantity=1,
+            service_price=service_price,
+            deposit_amount=deposit_amount,
+            remaining_amount=remaining_amount,
+            amount_status=amount_status,
+        )
+
     def _build_booking_deposit_draft_id(
         self,
         payload: BookingDepositDraftCreate,
     ) -> UUID:
+        items = payload.items or [
+            BookingDepositDraftItemCreate(
+                service_label=str(payload.service_label),
+                professional_label=str(payload.professional_label),
+                professional_id=payload.professional_id,
+                professional_role=payload.professional_role,
+                service_price=payload.service_price,
+            )
+        ]
+        item_seed = "|".join(
+            ":".join(
+                [
+                    item.service_label,
+                    item.professional_label,
+                    item.professional_id or "",
+                    item.professional_role or "",
+                    str(item.service_price or ""),
+                ]
+            )
+            for item in items
+        )
         seed = "|".join(
             [
                 payload.source,
-                payload.service_label,
-                payload.professional_label,
-                payload.professional_id or "",
-                payload.professional_role or "",
+                payload.assistant_session_id,
                 payload.requested_day or "",
                 payload.requested_time or "",
-                str(payload.service_price or ""),
+                item_seed,
             ]
         )
 
