@@ -184,3 +184,29 @@ Do not implement now:
 
 ### Current decision
 Codex CLI should implement Stage 1B only in the cart domain.
+
+## Backend handoff update — Cart Draft Stage 1B aprobado
+
+### Revisión
+DeepSeek V4 Flash aprobó Cart Draft Stage 1B para commit.
+
+### Decisión backend
+El contrato POST /cart/booking-deposit/draft queda estable para la siguiente fase frontend.
+
+### Capacidades aprobadas
+- Soporte de items[] para drafts multi-servicio.
+- assistant_session_id obligatorio.
+- draft_id dependiente de assistant_session_id.
+- cart_count derivado de len(items).
+- source restringido a assistant, web o admin.
+- Compatibilidad temporal con campos top-level de Stage 1A.
+
+### Deuda técnica aceptada
+- payment_status del cart sigue siendo not_executed mientras assistant puede usar deposit_pending como lenguaje comercial.
+- catalog_item_id queda para Stage 2.
+- currency/amount refactor queda para integración futura con pagos reales.
+- expires_at queda para etapa productiva posterior.
+- Persistencia del draft queda pendiente.
+
+### Próxima fase
+Frontend debe consumir este contrato mediante una migración controlada con fallback temporal.

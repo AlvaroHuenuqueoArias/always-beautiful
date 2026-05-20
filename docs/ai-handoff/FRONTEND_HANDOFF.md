@@ -167,3 +167,38 @@ The IA implementing frontend migration must run:
 - npm --prefix web run build
 - relevant backend pytest suites if the frontend payload contract changes
 - curl smoke test if frontend changes require backend confirmation
+
+## Frontend handoff update — Cart Draft Stage 1B listo para revisión frontend
+
+### Estado backend
+Cart Draft Stage 1B fue aprobado por DeepSeek V4 Flash.
+
+### Endpoint disponible
+POST /cart/booking-deposit/draft
+
+### Contrato relevante para frontend
+El frontend deberá enviar:
+- assistant_session_id
+- source
+- requested_day si existe
+- requested_time si existe
+- items[] con servicios seleccionados
+
+El backend responderá:
+- draft_id
+- type=booking_deposit_draft
+- status=draft
+- cart_count
+- items[]
+- total_amount
+- deposit_amount
+- remaining_amount
+- payment_status=not_executed
+- booking_status=not_created
+- order_status=not_created
+
+### Consideración importante
+El assistant puede seguir usando deposit_pending como lenguaje comercial, mientras cart usa not_executed como estado técnico backend. La migración frontend deberá decidir si hace mapping visual entre ambos conceptos.
+
+### Próxima revisión
+DeepSeek V4 Pro debe revisar AssistantChatWidget, assistantClient y CartPage después de recuperar el stash del assistant chat.

@@ -188,3 +188,19 @@ Do not run:
 - git add
 - git commit
 - git push
+
+## Codex re-entry update — Cart Draft Stage 1B approved
+
+### Estado
+Cart Draft Stage 1B fue implementado por Codex CLI y aprobado por DeepSeek V4 Flash.
+
+### No repetir
+No volver a implementar items[] en cart draft.
+No volver a modificar draft_id para assistant_session_id salvo ajuste puntual.
+No tocar backend cart para Stage 1B salvo que una revisión posterior detecte bug.
+
+### Próximo uso esperado de Codex
+Codex CLI probablemente será usado después de la revisión de DeepSeek V4 Pro para implementar la migración frontend assistant/cart.
+
+### Restricción
+No recuperar stash ni tocar frontend hasta que el usuario lo indique explícitamente.

@@ -267,3 +267,29 @@ Codex CLI
 
 ### Assistant chat work
 The recovered assistant chat working tree was moved to stash and must remain paused until Stage 1B is complete.
+
+## 2026-05-20 — Cart Draft Stage 1B aprobado por revisión backend
+
+### Implementado por
+- Codex CLI
+
+### Revisado por
+- DeepSeek V4 Flash
+
+### Orquestado por
+- ChatGPT
+
+### Resultado
+Cart Draft Stage 1B fue aprobado para commit.
+
+### Cambios validados
+- items[] multi-servicio.
+- assistant_session_id obligatorio.
+- draft_id dependiente de assistant_session_id.
+- source restringido con Literal.
+- cart_count derivado desde len(items).
+- tests actualizados a 6 casos.
+- curl smoke tests exitosos.
+
+### Decisión
+Avanzar a commits locales de Stage 1B y Bitácora IA. No hacer push todavía. Luego recuperar stash del assistant chat para revisión frontend con DeepSeek V4 Pro.
