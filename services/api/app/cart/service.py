@@ -1,10 +1,13 @@
 from typing import List
-from uuid import UUID, uuid4
+from uuid import NAMESPACE_URL, UUID, uuid4, uuid5
 
 from fastapi import HTTPException, status
 
 from app.cart.repository import CartRepository
 from app.cart.schemas import (
+    BookingDepositDraftCreate,
+    BookingDepositDraftItemResponse,
+    BookingDepositDraftResponse,
     CartItemCreate,
     CartItemResponse,
     CartItemUpdate,
@@ -12,6 +15,10 @@ from app.cart.schemas import (
 )
 from app.catalog.routes import catalog_service
 from app.catalog.schemas import CatalogItemType
+
+
+BOOKING_DEPOSIT_PERCENTAGE = 20
+BOOKING_REMAINING_PERCENTAGE = 80
 
 
 class CartService:
@@ -26,6 +33,61 @@ class CartService:
         )
 
         return self.repository.save(cart)
+
+    def create_booking_deposit_draft(
+        self,
+        payload: BookingDepositDraftCreate,
+    ) -> BookingDepositDraftResponse:
+        service_price = (
+            round(payload.service_price, 2)
+            if payload.service_price is not None
+            else None
+        )
+        deposit_amount = self._calculate_percentage_amount(
+            service_price,
+            BOOKING_DEPOSIT_PERCENTAGE,
+        )
+        remaining_amount = self._calculate_percentage_amount(
+            service_price,
+            BOOKING_REMAINING_PERCENTAGE,
+        )
+        amount_status = (
+            "estimated"
+            if service_price is not None
+            else "pending_final_price"
+        )
+        schedule_status = (
+            "pending_confirmation"
+            if payload.requested_day and payload.requested_time
+            else "pending_selection"
+        )
+        draft_item = BookingDepositDraftItemResponse(
+            service_label=payload.service_label,
+            professional_label=payload.professional_label,
+            professional_id=payload.professional_id,
+            professional_role=payload.professional_role,
+            quantity=1,
+            service_price=service_price,
+            deposit_amount=deposit_amount,
+            remaining_amount=remaining_amount,
+            amount_status=amount_status,
+        )
+
+        return BookingDepositDraftResponse(
+            draft_id=self._build_booking_deposit_draft_id(payload),
+            source=payload.source,
+            deposit_percentage=BOOKING_DEPOSIT_PERCENTAGE,
+            remaining_percentage=BOOKING_REMAINING_PERCENTAGE,
+            total_amount=service_price,
+            deposit_amount=deposit_amount,
+            remaining_amount=remaining_amount,
+            amount_status=amount_status,
+            schedule_status=schedule_status,
+            requested_day=payload.requested_day,
+            requested_time=payload.requested_time,
+            cart_count=1,
+            items=[draft_item],
+        )
 
     def get_cart_by_id(self, cart_id: UUID) -> CartResponse:
         cart = self.repository.get_by_id(cart_id)
@@ -210,3 +272,32 @@ class CartService:
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Requested quantity exceeds available stock",
             )
+
+    def _calculate_percentage_amount(
+        self,
+        amount: float | None,
+        percentage: int,
+    ) -> float | None:
+        if amount is None:
+            return None
+
+        return round(amount * percentage / 100, 2)
+
+    def _build_booking_deposit_draft_id(
+        self,
+        payload: BookingDepositDraftCreate,
+    ) -> UUID:
+        seed = "|".join(
+            [
+                payload.source,
+                payload.service_label,
+                payload.professional_label,
+                payload.professional_id or "",
+                payload.professional_role or "",
+                payload.requested_day or "",
+                payload.requested_time or "",
+                str(payload.service_price or ""),
+            ]
+        )
+
+        return uuid5(NAMESPACE_URL, f"always-beautiful:cart:{seed}")
