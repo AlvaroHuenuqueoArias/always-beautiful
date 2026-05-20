@@ -4,6 +4,8 @@ from fastapi import APIRouter, status
 
 from app.cart.repository import CartRepository
 from app.cart.schemas import (
+    BookingDepositDraftCreate,
+    BookingDepositDraftResponse,
     CartItemCreate,
     CartItemUpdate,
     CartResponse,
@@ -19,6 +21,17 @@ cart_service = CartService(cart_repository)
 @router.post("", response_model=CartResponse, status_code=status.HTTP_201_CREATED)
 def create_cart() -> CartResponse:
     return cart_service.create_cart()
+
+
+@router.post(
+    "/booking-deposit/draft",
+    response_model=BookingDepositDraftResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def create_booking_deposit_draft(
+    payload: BookingDepositDraftCreate,
+) -> BookingDepositDraftResponse:
+    return cart_service.create_booking_deposit_draft(payload)
 
 
 @router.get("/{cart_id}", response_model=CartResponse, status_code=status.HTTP_200_OK)
