@@ -236,3 +236,34 @@ For future implementation prompts, Codex CLI must execute pytest, build checks w
 - Before frontend migration, backend review must decide whether the endpoint should accept items[].
 - draft_id is deterministic through uuid5 for testability, but production may require session_id, expires_at or persistence.
 - service_price currently uses float, acceptable for this stage but not ideal for real payment integration.
+
+## 2026-05-20 — DeepSeek V4 Flash backend review of cart draft Stage 1A
+
+### Reviewed by
+- DeepSeek V4 Flash
+
+### Orchestrated by
+- ChatGPT
+
+### Context
+DeepSeek V4 Flash reviewed the Stage 1A backend contract:
+
+POST /cart/booking-deposit/draft
+
+### Result
+The endpoint is correctly located in the cart domain, but it should not be consumed by frontend yet.
+
+### Blocking findings
+- Missing items[] support for multi-service assistant flow.
+- draft_id does not include assistant_session_id or client_session_id.
+- assistant and cart currently expose different payment_status semantics.
+- assistant_session_id is missing from the request schema.
+
+### Decision
+Implement Cart Draft Stage 1B before frontend migration.
+
+### Next owner
+Codex CLI
+
+### Assistant chat work
+The recovered assistant chat working tree was moved to stash and must remain paused until Stage 1B is complete.

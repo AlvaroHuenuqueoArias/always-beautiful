@@ -145,3 +145,42 @@ The endpoint was smoke-tested through curl and returned HTTP 201 Created with:
 
 ### Recommended next backend review
 DeepSeek V4 Flash should review the new cart contract before frontend migration.
+
+## Backend handoff update — Cart draft Stage 1B required
+
+### Review source
+DeepSeek V4 Flash backend diagnosis.
+
+### Stage 1A assessment
+The Stage 1A cart draft contract is correctly placed in the cart domain and respects the current non-goals:
+- no real booking
+- no real order
+- no real payment
+- no assistant mutation
+- no frontend mutation
+
+### Stage 1B required before frontend migration
+The contract must be adjusted before frontend consumes it.
+
+Required changes:
+1. Support items[] in BookingDepositDraftCreate.
+2. Add assistant_session_id to the request.
+3. Include assistant_session_id in draft_id seed generation.
+4. Derive cart_count from len(items).
+5. Restrict source with Literal["assistant", "web", "admin"].
+6. Add tests for multi-service drafts.
+7. Add tests for different assistant_session_id values generating different draft_id values.
+8. Add tests for invalid source.
+
+### Deferred items
+Do not implement now:
+- real payment
+- real booking
+- real order
+- catalog_item_id mapping
+- currency/amount refactor
+- frontend migration
+- assistant mutation
+
+### Current decision
+Codex CLI should implement Stage 1B only in the cart domain.

@@ -185,3 +185,57 @@ DeepSeek V4 Flash should review backend contract quality before any frontend mig
 - do not implement real payment
 - do not create real booking
 - do not create real order
+
+## AI Coordination Ledger — DeepSeek V4 Flash backend review after cart draft Stage 1A
+
+### Current branch
+feature/assistant-booking-conversion-flow
+
+### Working tree status before Stage 1B
+The recovered assistant chat changes were moved to stash to keep the working tree clean before implementing the next backend-only adjustment.
+
+Current stash:
+- stash@{0}: pausa del assistant chat: cambios recuperados antes de la fase 1b del contrato del carrito
+
+### Backend review result
+DeepSeek V4 Flash reviewed the cart draft Stage 1A contract and confirmed:
+- POST /cart/booking-deposit/draft belongs in the cart domain.
+- The endpoint correctly avoids creating booking, order or payment.
+- The current contract is a valid first backend foundation.
+
+### Blocking findings before frontend migration
+DeepSeek V4 Flash identified that Stage 1A must not be consumed by frontend yet because:
+1. The endpoint does not support items[] multi-service drafts.
+2. draft_id does not include assistant_session_id or client_session_id.
+3. payment_status differs between assistant payload language and cart backend response.
+4. The request does not include assistant_session_id for assistant draft correlation.
+
+### Decision
+Proceed with Cart Draft Stage 1B before returning to frontend or assistant chat implementation.
+
+### Next implementation owner
+Codex CLI
+
+### Stage 1B implementation scope
+Allowed:
+- services/api/app/cart/schemas.py
+- services/api/app/cart/service.py
+- services/api/app/cart/routes.py
+- services/api/tests/cart/test_booking_deposit_draft.py
+
+Not allowed:
+- services/api/app/assistant/*
+- web/*
+- services/api/app/orders/*
+- services/api/app/payments/*
+- services/api/app/booking/*
+- services/api/app/catalog/*
+
+### Next validation requirements
+Codex CLI must run:
+- PYTHONPATH=services/api services/api/.venv/bin/pytest services/api/tests/cart/test_booking_deposit_draft.py -v
+- PYTHONPATH=services/api services/api/.venv/bin/pytest services/api/tests/assistant/test_assistant_routes.py -v
+- curl smoke test for multi-service draft
+- curl smoke test for different assistant_session_id producing a different draft_id
+- git diff --check
+- git status --short

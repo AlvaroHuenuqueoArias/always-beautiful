@@ -140,3 +140,51 @@ Potential future direction:
 - npm --prefix web run build when frontend or branch health requires it
 - curl smoke tests for new or changed HTTP endpoints
 - git diff --check
+
+## Codex re-entry update — Cart draft Stage 1B
+
+### Current task
+Implement Cart Draft Stage 1B based on DeepSeek V4 Flash backend diagnosis.
+
+### Do not touch
+- services/api/app/assistant/*
+- web/*
+- services/api/app/orders/*
+- services/api/app/payments/*
+- services/api/app/booking/*
+- services/api/app/catalog/*
+- requirements.txt
+- package files
+- .env
+
+### Allowed files
+- services/api/app/cart/schemas.py
+- services/api/app/cart/service.py
+- services/api/app/cart/routes.py
+- services/api/tests/cart/test_booking_deposit_draft.py
+
+### Required changes
+1. Add items[] support to BookingDepositDraftCreate.
+2. Add assistant_session_id to BookingDepositDraftCreate.
+3. Use assistant_session_id in the draft_id seed.
+4. Compute cart_count from len(items).
+5. Restrict source to Literal["assistant", "web", "admin"].
+6. Add tests for:
+   - multi-service draft
+   - same payload + same assistant_session_id = same draft_id
+   - same payload + different assistant_session_id = different draft_id
+   - invalid source = 422
+
+### Validation required
+- PYTHONPATH=services/api services/api/.venv/bin/pytest services/api/tests/cart/test_booking_deposit_draft.py -v
+- PYTHONPATH=services/api services/api/.venv/bin/pytest services/api/tests/assistant/test_assistant_routes.py -v
+- curl smoke test for multi-service draft
+- curl smoke test proving different assistant_session_id changes draft_id
+- git diff --check
+- git status --short
+
+### Git restrictions
+Do not run:
+- git add
+- git commit
+- git push
