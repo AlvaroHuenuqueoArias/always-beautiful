@@ -134,3 +134,63 @@ Todas las IA deben dejar contexto suficiente para que las demás entiendan:
 - qué falló
 - qué falta
 - qué debe revisar Codex CLI
+## Operational validation ownership — 2026-05-19
+
+### ChatGPT
+Owns:
+- architecture decisions
+- sequencing
+- scope control
+- prompt design
+- commit/push recommendations
+- risk review
+- handoff documentation planning
+
+Does not directly execute local repository commands.
+
+### Codex CLI
+Owns:
+- implementation inside the repository
+- local tests when instructed
+- local build when instructed
+- local curl smoke tests when instructed
+- scoped fullstack/backend/frontend changes
+
+Must not:
+- change files outside the authorized scope
+- commit unless explicitly instructed
+- push unless explicitly instructed
+- decide architecture unilaterally
+
+### DeepSeek V4 Flash
+Owns:
+- backend review
+- FastAPI/Pydantic/service-layer diagnosis
+- API contract review
+- backend test coverage review
+
+Recommended use:
+- review cart draft contract before frontend migration
+
+### DeepSeek V4 Pro
+Owns:
+- frontend review
+- UX/client flow review
+- React/Vite architecture diagnosis
+- assistant widget and cart page integration review
+
+Recommended use:
+- review frontend migration plan after backend contract is accepted
+
+### User
+Owns:
+- final terminal execution
+- Git commits
+- Git push
+- GitHub Pull Requests
+- branch merge decisions
+- final business approval
+
+### Curl policy
+Manual curl execution by the user should not be the default path.
+For future endpoint implementation tasks, Codex CLI must execute curl smoke tests inside the official prompt unless explicitly instructed otherwise.

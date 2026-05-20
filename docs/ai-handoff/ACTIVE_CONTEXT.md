@@ -143,3 +143,45 @@ La opción `/assistant/cart/handoff` queda descartada como diseño definitivo y 
 3. Copiar el diagnóstico completo en ChatGPT.
 4. Comparar diagnóstico frontend con diagnóstico backend.
 5. No autorizar Build Mode hasta completar revisión multiagente.
+## Active context update — 2026-05-19
+
+### Current branch
+feature/assistant-booking-conversion-flow
+
+### Latest implemented backend contract
+POST /cart/booking-deposit/draft
+
+### Implementation owner
+Codex CLI
+
+### Current local status
+The cart draft backend implementation has been created and validated locally.
+
+### Validation completed
+- cart draft tests: 4 passed
+- assistant tests: 43 passed
+- git diff --check: clean
+- curl smoke test: HTTP 201 Created
+
+### Next commit plan
+1. feat(cart): crear draft backend de abono de reserva
+2. docs(ai): registrar contrato cart draft y validaciones
+
+### Validation protocol update
+Future Codex implementation prompts must include:
+- pytest commands relevant to the changed domain
+- npm build when frontend or branch health requires it
+- curl smoke tests for new or changed HTTP endpoints
+- git diff --check
+- git status --short
+
+### Next AI review
+DeepSeek V4 Flash should review backend contract quality before any frontend migration.
+
+### Do not do yet
+- do not merge to develop
+- do not close the feature branch
+- do not migrate frontend yet
+- do not implement real payment
+- do not create real booking
+- do not create real order

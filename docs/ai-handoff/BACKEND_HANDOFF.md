@@ -86,3 +86,62 @@ pytest tests/assistant/test_assistant_routes.py -v
 deactivate
 cd ../..
 git status --short
+## Backend handoff update — Cart booking deposit draft
+
+### Current backend milestone
+The cart domain now exposes the first formal backend contract for assistant-to-cart booking deposit conversion:
+
+POST /cart/booking-deposit/draft
+
+### Purpose
+Move booking deposit draft responsibility from frontend/sessionStorage toward the backend cart domain.
+
+### Domain boundary
+- assistant guides commercial intent
+- cart creates the draft
+- booking will confirm the real booking later
+- payments will execute real payment later
+- orders will provide commercial traceability later
+
+### Current implementation
+Implemented:
+- BookingDepositDraftCreate
+- BookingDepositDraftItemResponse
+- BookingDepositDraftResponse
+- CartService.create_booking_deposit_draft
+- POST /cart/booking-deposit/draft
+- API tests for draft creation, pending price, deterministic draft id and invalid payload
+
+### Explicit non-goals
+This stage does not:
+- persist a draft in database
+- create a booking
+- create an order
+- execute payment
+- consume catalog IDs
+- modify frontend
+- modify assistant
+
+### Validated behavior
+The endpoint was smoke-tested through curl and returned HTTP 201 Created with:
+- type=booking_deposit_draft
+- status=draft
+- deposit_percentage=20
+- payment_status=not_executed
+- booking_status=not_created
+- order_status=not_created
+
+### Backend risks to review
+1. Determine whether the endpoint must support multiple services through items[] before frontend integration.
+2. Decide whether uuid5 deterministic draft_id is acceptable for this stage.
+3. Evaluate whether service_price float should remain temporarily or move toward amount/currency.
+4. Consider future fields:
+   - assistant_session_id
+   - client_session_id
+   - expires_at
+   - currency
+   - catalog_item_id
+   - professional_id as stable backend identifier
+
+### Recommended next backend review
+DeepSeek V4 Flash should review the new cart contract before frontend migration.
