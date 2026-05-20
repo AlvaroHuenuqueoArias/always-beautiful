@@ -177,3 +177,62 @@ Cada intervención debe ser breve, verificable y útil para que Codex CLI, DeepS
   - no autorizar Build Mode hasta que Codex revise ambos diagnósticos
 - Archivos de handoff actualizados:
   - pendiente de actualización manual por el usuario
+## 2026-05-19 — Cart booking deposit draft backend contract
+
+### Implemented by
+- Codex CLI
+
+### Reviewed/orchestrated by
+- ChatGPT
+
+### Branch
+- feature/assistant-booking-conversion-flow
+
+### Context
+A previous multi-model diagnosis identified that the frontend was carrying too much commercial responsibility during the assistant-to-cart handoff. The assistant and frontend were preparing cart payloads, while the backend did not yet expose a formal cart-domain contract for booking deposit drafts.
+
+### Decision
+The formal contract must live in the cart domain, not in assistant.
+
+Created backend endpoint:
+
+POST /cart/booking-deposit/draft
+
+### Files changed
+- services/api/app/cart/schemas.py
+- services/api/app/cart/service.py
+- services/api/app/cart/routes.py
+- services/api/tests/cart/test_booking_deposit_draft.py
+
+### Contract behavior
+The endpoint creates a draft representation for a booking deposit. It does not:
+- confirm a real booking
+- create a real order
+- execute a real payment
+- modify assistant state
+- modify frontend state
+
+### Validation status
+Validated sequentially before commit/push:
+- PYTHONPATH=services/api services/api/.venv/bin/pytest services/api/tests/cart/test_booking_deposit_draft.py -v
+  - 4 passed
+- PYTHONPATH=services/api services/api/.venv/bin/pytest services/api/tests/assistant/test_assistant_routes.py -v
+  - 43 passed
+- git diff --check
+  - clean
+- curl smoke test for POST /cart/booking-deposit/draft
+  - HTTP/1.1 201 Created
+  - returned booking_deposit_draft with status=draft
+  - returned payment_status=not_executed
+  - returned booking_status=not_created
+  - returned order_status=not_created
+
+### Validation ownership update
+For future implementation prompts, Codex CLI must execute pytest, build checks when relevant, git diff --check and curl smoke tests as part of the official implementation report.
+
+### Risks and follow-up
+- The current contract mainly supports a single service item.
+- The assistant flow already supports multi-service scenarios.
+- Before frontend migration, backend review must decide whether the endpoint should accept items[].
+- draft_id is deterministic through uuid5 for testability, but production may require session_id, expires_at or persistence.
+- service_price currently uses float, acceptable for this stage but not ideal for real payment integration.

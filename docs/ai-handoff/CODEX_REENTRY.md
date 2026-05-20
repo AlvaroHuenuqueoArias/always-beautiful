@@ -105,3 +105,38 @@ Codex debe retomar cuando:
 - se requiera merge
 - se requiera decisión de alcance
 - se detecte riesgo sobre una base estable
+## Codex re-entry update — Cart draft contract implemented
+
+### Current status
+Codex implemented the first backend cart contract:
+
+POST /cart/booking-deposit/draft
+
+### Do not repeat
+Do not recreate the same endpoint.
+Do not move the endpoint to assistant.
+Do not touch frontend until instructed.
+Do not create booking, order or payment from this endpoint.
+
+### If re-entering backend
+First inspect:
+- services/api/app/cart/schemas.py
+- services/api/app/cart/service.py
+- services/api/app/cart/routes.py
+- services/api/tests/cart/test_booking_deposit_draft.py
+
+### Next likely backend task
+If backend review approves, evolve the contract only if required to support multi-service cart drafts.
+
+Potential future direction:
+- replace single service fields with items[]
+- add amount/currency fields
+- add session identifiers
+- keep compatibility with current assistant payloads if possible
+
+### Required checks before any future backend commit
+- PYTHONPATH=services/api services/api/.venv/bin/pytest services/api/tests/cart/test_booking_deposit_draft.py -v
+- PYTHONPATH=services/api services/api/.venv/bin/pytest services/api/tests/assistant/test_assistant_routes.py -v
+- npm --prefix web run build when frontend or branch health requires it
+- curl smoke tests for new or changed HTTP endpoints
+- git diff --check

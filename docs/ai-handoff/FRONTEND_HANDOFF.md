@@ -134,3 +134,36 @@ Pasar a Codex CLI en modo diagnóstico/arquitectura para decidir:
 - qué tests se deben agregar
 - si el primer cambio lo ejecuta Codex directamente o DeepSeek bajo instrucciones
 - cómo separar commits backend/frontend
+## Frontend handoff update — Pending cart draft API consumption
+
+### Current state
+The backend now exposes:
+
+POST /cart/booking-deposit/draft
+
+The frontend has not been migrated yet.
+
+### Current frontend responsibility
+The current assistant-to-cart handoff still relies on frontend handling and temporary storage behavior. This is acceptable only as a transitional state.
+
+### Future frontend objective
+Move the assistant-to-cart handoff toward backend contract consumption.
+
+### Expected frontend migration path
+1. Add a frontend API client function for POST /cart/booking-deposit/draft.
+2. Trigger the API call during the assistant handoff to cart.
+3. Store the backend draft response temporarily.
+4. Update CartPage to render the backend draft structure.
+5. Keep fallback behavior during the transition.
+6. Remove fragile frontend-only commercial validation once backend contract is stable.
+
+### Important constraint
+Do not migrate frontend until backend review decides whether the cart draft contract must support:
+- single service only
+- multiple service items
+
+### Required future frontend validation
+The IA implementing frontend migration must run:
+- npm --prefix web run build
+- relevant backend pytest suites if the frontend payload contract changes
+- curl smoke test if frontend changes require backend confirmation
