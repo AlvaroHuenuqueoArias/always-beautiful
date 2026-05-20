@@ -325,3 +325,99 @@ Los 15 archivos del assistant chat siguen pausados en stash y no deben recuperar
 
 ### Próximo modelo
 DeepSeek V4 Pro debe revisar la integración frontend después de recuperar el stash.
+
+## Bitácora de Coordinación IA — Recuperación del stash del assistant chat
+
+### Estado
+Se aplicó `stash@{0}` para recuperar los cambios pausados del flujo conversacional del assistant chat.
+
+### Resultado
+Los archivos backend assistant y frontend assistant/cart fueron recuperados como cambios locales del working tree.
+
+### Conflicto resuelto
+Durante `git stash apply`, `docs/ai-handoff/ACTIVE_CONTEXT.md` presentó conflicto de contenido porque la Bitácora IA había sido actualizada después de crear el stash.
+
+La resolución aplicada fue conservar la versión actual de la rama, ya actualizada con Cart Draft Stage 1B, y registrar esta nota de recuperación.
+
+### Archivos recuperados esperados
+Backend assistant:
+- services/api/app/assistant/graph.py
+- services/api/app/assistant/policies.py
+- services/api/app/assistant/schemas.py
+- services/api/app/assistant/service.py
+- services/api/app/assistant/tools/booking_tools.py
+- services/api/app/assistant/tools/cart_tools.py
+- services/api/app/assistant/tools/professional_tools.py
+- services/api/tests/assistant/test_assistant_routes.py
+
+Frontend assistant/cart:
+- web/src/components/shared/AssistantChatWidget.jsx
+- web/src/components/shared/AssistantMessageList.jsx
+- web/src/components/shared/PublicHeader.jsx
+- web/src/index.css
+- web/src/layouts/PublicLayout.jsx
+- web/src/pages/public/CartPage.jsx
+- web/src/services/assistantClient.js
+
+### Próximo paso
+DeepSeek V4 Pro debe revisar el flujo frontend assistant/cart en modo Plan antes de cualquier implementación adicional con Codex CLI.
+
+### Restricciones vigentes
+- No hacer push todavía.
+- No abrir PR todavía.
+- No mergear hacia develop todavía.
+- No usar `git stash pop`.
+- No borrar el stash hasta confirmar que la recuperación quedó estable.
+
+## Bitácora de Coordinación IA — Diagnóstico frontend de DeepSeek V4 Pro para migración assistant → cart
+
+### Resultado de revisión
+DeepSeek V4 Pro revisó el estado frontend/fullstack después de la aprobación backend de Cart Draft Stage 1B.
+
+### Decisión
+Codex CLI puede implementar la migración frontend en modo Build.
+
+### Razón
+El backend cart ya está estable para la fase actual y el assistant backend no necesita cambios inmediatos. La migración debe realizarse en frontend para que el handoff assistant → cart consuma el endpoint real:
+
+POST /cart/booking-deposit/draft
+
+### Riesgos frontend detectados
+- AssistantChatWidget todavía valida el cart_payload antiguo.
+- CartPage todavía renderiza datos de sessionStorage con schema antiguo.
+- No existe cliente frontend para crear el draft backend.
+- PublicHeader debe contar items desde el BookingDepositDraftResponse.
+- payment_status técnico del backend debe mapearse a lenguaje comercial comprensible.
+
+### Siguiente implementación
+Codex CLI debe implementar una migración frontend controlada.
+
+### Archivos permitidos para Codex
+- web/src/services/assistantClient.js
+- web/src/components/shared/AssistantChatWidget.jsx
+- web/src/pages/public/CartPage.jsx
+- web/src/components/shared/PublicHeader.jsx
+- web/src/components/shared/AssistantMessageList.jsx
+
+### Archivos que Codex no debe tocar
+- services/api/app/cart/*
+- services/api/app/assistant/*
+- services/api/tests/*
+- web/package.json
+- web/package-lock.json
+- AGENTS.md
+- docs/*
+
+### Validaciones requeridas
+- npm --prefix web run build
+- PYTHONPATH=services/api services/api/.venv/bin/pytest services/api/tests/cart/test_booking_deposit_draft.py -v
+- PYTHONPATH=services/api services/api/.venv/bin/pytest services/api/tests/assistant/test_assistant_routes.py -v
+- curl smoke test de POST /cart/booking-deposit/draft
+- git diff --check
+- git status --short
+
+### Restricciones vigentes
+- No hacer push todavía.
+- No abrir PR todavía.
+- No mergear hacia develop todavía.
+- No borrar stash todavía.

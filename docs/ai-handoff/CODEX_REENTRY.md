@@ -204,3 +204,49 @@ Codex CLI probablemente será usado después de la revisión de DeepSeek V4 Pro 
 
 ### Restricción
 No recuperar stash ni tocar frontend hasta que el usuario lo indique explícitamente.
+
+## Codex re-entry update — Frontend migration assistant to cart draft
+
+### Current task
+Implement frontend migration so assistant handoff consumes:
+
+POST /cart/booking-deposit/draft
+
+### Allowed files
+- web/src/services/assistantClient.js
+- web/src/components/shared/AssistantChatWidget.jsx
+- web/src/pages/public/CartPage.jsx
+- web/src/components/shared/PublicHeader.jsx
+- web/src/components/shared/AssistantMessageList.jsx
+
+### Do not touch
+- services/api/app/cart/*
+- services/api/app/assistant/*
+- services/api/tests/*
+- docs/*
+- AGENTS.md
+- package files
+
+### Required implementation
+1. Add createBookingDepositDraft().
+2. Add mapping from assistant cart_payload to BookingDepositDraftCreate.
+3. Use assistant_session_id from frontend session handling.
+4. Send items[] to cart backend.
+5. Persist BookingDepositDraftResponse temporarily.
+6. Update CartPage to render backend draft response.
+7. Update PublicHeader badge count.
+8. Keep fallback temporary and explicit.
+
+### Required validation
+- npm --prefix web run build
+- PYTHONPATH=services/api services/api/.venv/bin/pytest services/api/tests/cart/test_booking_deposit_draft.py -v
+- PYTHONPATH=services/api services/api/.venv/bin/pytest services/api/tests/assistant/test_assistant_routes.py -v
+- curl smoke test for POST /cart/booking-deposit/draft
+- git diff --check
+- git status --short
+
+### Git restrictions
+Do not run:
+- git add
+- git commit
+- git push

@@ -293,3 +293,29 @@ Cart Draft Stage 1B fue aprobado para commit.
 
 ### Decisión
 Avanzar a commits locales de Stage 1B y Bitácora IA. No hacer push todavía. Luego recuperar stash del assistant chat para revisión frontend con DeepSeek V4 Pro.
+
+## 2026-05-20 — DeepSeek V4 Pro diagnostica migración frontend assistant → cart
+
+### Revisado por
+- DeepSeek V4 Pro
+
+### Orquestado por
+- ChatGPT
+
+### Resultado
+DeepSeek V4 Pro determinó que Codex CLI puede implementar la migración frontend.
+
+### Decisión
+No se requiere ajuste backend cart.
+No se requiere ajuste backend assistant.
+La siguiente implementación debe ser frontend.
+
+### Riesgos detectados
+- isCompleteCartPayload usa el schema antiguo.
+- CartPage renderiza el schema antiguo desde sessionStorage.
+- Falta cliente frontend para POST /cart/booking-deposit/draft.
+- PublicHeader debe leer el nuevo draft backend.
+- payment_status necesita mapping visual.
+
+### Próximo owner
+- Codex CLI en modo Build

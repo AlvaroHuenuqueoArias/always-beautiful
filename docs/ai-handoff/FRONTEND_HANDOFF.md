@@ -202,3 +202,37 @@ El assistant puede seguir usando deposit_pending como lenguaje comercial, mientr
 
 ### Próxima revisión
 DeepSeek V4 Pro debe revisar AssistantChatWidget, assistantClient y CartPage después de recuperar el stash del assistant chat.
+
+## Frontend handoff update — DeepSeek V4 Pro autoriza migración assistant → cart
+
+### Diagnóstico
+DeepSeek V4 Pro confirmó que el frontend todavía usa el cart_payload del assistant como fuente de verdad temporal.
+
+### Nueva fuente de verdad
+El frontend debe consumir:
+
+POST /cart/booking-deposit/draft
+
+y renderizar el BookingDepositDraftResponse en CartPage.
+
+### Implementación esperada
+Codex CLI debe:
+1. Crear o agregar una función createBookingDepositDraft().
+2. Transformar cart_payload del assistant hacia BookingDepositDraftCreate.
+3. Enviar assistant_session_id.
+4. Enviar items[].
+5. Persistir temporalmente BookingDepositDraftResponse.
+6. Actualizar CartPage para renderizar el draft backend.
+7. Actualizar PublicHeader para leer cart_count/items.length.
+8. Mantener fallback temporal sin dejar sessionStorage como fuente de verdad final.
+
+### Mapping visual requerido
+- backend payment_status=not_executed debe mostrarse como Pago pendiente o Abono pendiente.
+- assistant deposit_pending puede mantenerse como lenguaje conversacional interno.
+
+### Archivos principales
+- web/src/services/assistantClient.js
+- web/src/components/shared/AssistantChatWidget.jsx
+- web/src/pages/public/CartPage.jsx
+- web/src/components/shared/PublicHeader.jsx
+- web/src/components/shared/AssistantMessageList.jsx
